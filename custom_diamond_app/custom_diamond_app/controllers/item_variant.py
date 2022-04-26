@@ -362,6 +362,7 @@ def make_variant_item_code(template_item_code, template_item_name, variant):
 		return
 
 	abbreviations = []
+	abbreviations_value = []
 	for attr in variant.attributes:
 		item_attribute = frappe.db.sql(
 			"""select i.numeric_values, v.abbr
@@ -371,21 +372,30 @@ def make_variant_item_code(template_item_code, template_item_name, variant):
 			{"attribute": attr.attribute, "attribute_value": attr.attribute_value},
 			as_dict=True,
 		)
-
+  
+		item_attribute_value = frappe.db.sql(
+			"""select i.numeric_values, v.attribute_value
+			from `tabItem Attribute` i left join `tabItem Attribute Value` v
+				on (i.name=v.parent)
+			where i.name=%(attribute)s and (v.attribute_value=%(attribute_value)s or i.numeric_values = 1)""",
+			{"attribute": attr.attribute, "attribute_value": attr.attribute_value},
+			as_dict=True,
+		)
 		if not item_attribute:
 			continue
-			# frappe.throw(_('Invalid attribute {0} {1}').format(frappe.bold(attr.attribute),
-			# 	frappe.bold(attr.attribute_value)), title=_('Invalid Attribute'),
-			# 	exc=InvalidItemAttributeValueError)
-
+		if not item_attribute_value:
+			continue
 		abbr_or_value = (
 			cstr(attr.attribute_value) if item_attribute[0].numeric_values else item_attribute[0].abbr
 		)
+		abbr_or_item_value = (
+			cstr(attr.item_attribute_value) if item_attribute_value[0].numeric_values else item_attribute_value[0].attribute_value
+		)
+		abbreviations_value.append(abbr_or_item_value)
 		abbreviations.append(abbr_or_value)
-
 	if abbreviations:
 		variant.item_code = "{0}-{1}".format(template_item_code, "-".join(abbreviations))
-		variant.item_name = "{0}-{1}".format(template_item_name, "-".join(abbreviations))
+		variant.item_name = "{0}-{1}".format(template_item_name, "-".join(abbreviations_value))
 
 
 @frappe.whitelist()
