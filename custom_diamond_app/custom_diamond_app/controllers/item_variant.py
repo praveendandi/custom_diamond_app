@@ -362,8 +362,11 @@ def make_variant_item_code(template_item_code, template_item_name, variant):
 		return
 
 	abbreviations = []
+    #abbreviation value empty list
 	abbreviations_value = []
+    #looping over the attributes in order to get the attribute value
 	for attr in variant.attributes:
+        #sql inner query to get the attribute attr
 		item_attribute = frappe.db.sql(
 			"""select i.numeric_values, v.abbr
 			from `tabItem Attribute` i left join `tabItem Attribute Value` v
@@ -372,7 +375,7 @@ def make_variant_item_code(template_item_code, template_item_name, variant):
 			{"attribute": attr.attribute, "attribute_value": attr.attribute_value},
 			as_dict=True,
 		)
-  
+		#sql inner query to get the attribute item value
 		item_attribute_value = frappe.db.sql(
 			"""select i.numeric_values, v.attribute_value
 			from `tabItem Attribute` i left join `tabItem Attribute Value` v
@@ -381,18 +384,23 @@ def make_variant_item_code(template_item_code, template_item_name, variant):
 			{"attribute": attr.attribute, "attribute_value": attr.attribute_value},
 			as_dict=True,
 		)
+		#if item attribute is empty continue
 		if not item_attribute:
 			continue
 		if not item_attribute_value:
 			continue
+		#saving data with numeric values and item attribute
 		abbr_or_value = (
 			cstr(attr.attribute_value) if item_attribute[0].numeric_values else item_attribute[0].abbr
 		)
+		#saving data with numeric values and item attribute item values
 		abbr_or_item_value = (
 			cstr(attr.item_attribute_value) if item_attribute_value[0].numeric_values else item_attribute_value[0].attribute_value
 		)
+		#appending values to empty list 
 		abbreviations_value.append(abbr_or_item_value)
 		abbreviations.append(abbr_or_value)
+	#saving item code and item name 
 	if abbreviations:
 		variant.item_code = "{0}-{1}".format(template_item_code, "-".join(abbreviations))
 		variant.item_name = "{0}-{1}".format(template_item_name, "-".join(abbreviations_value))
