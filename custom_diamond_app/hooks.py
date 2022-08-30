@@ -46,6 +46,7 @@ fixtures = [
             "name",
             "in",
             [
+                'Sales Invoice-single_carton',
                 'Sales Invoice-double_carton',
                 'Sales Invoice-total_no_of_carton',
                 'Delivery Note Item-quantity_in_sales_order_',            
