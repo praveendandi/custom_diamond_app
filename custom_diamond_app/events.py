@@ -79,7 +79,7 @@ def make_delivery_note(source_name, target_doc=None, skip_item_mapping=False):
 				"rate": "rate",
 				"name": "so_detail",
 				"parent": "against_sales_order",
-				"qty":"sales_order_qty",
+				"qty":"quantity_in_sales_order_",
 			},
 			"postprocess": update_item,
 			"condition": condition,
