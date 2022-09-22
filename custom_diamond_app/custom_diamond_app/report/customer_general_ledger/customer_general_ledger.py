@@ -151,7 +151,7 @@ def set_account_currency(filters):
 
 def get_result(filters, account_details):
 	accounting_dimensions = []
-	if filters.get("party") and filters.get("party_group") != None:
+	if filters.get("party_group") != None:
 		if filters.get("include_dimensions"):
 			accounting_dimensions = get_accounting_dimensions()
 
