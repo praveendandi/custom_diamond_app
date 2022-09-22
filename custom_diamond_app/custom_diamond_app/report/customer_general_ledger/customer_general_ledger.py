@@ -106,53 +106,52 @@ def validate_party(filters):
 
 
 def set_account_currency(filters):
-    if filters.get("party") != None:
-        if filters.get("account") or (filters.get("party") and len(filters.party) == 1):
-            filters["company_currency"] = frappe.get_cached_value(
-				"Company", filters.company, "default_currency"
+	if filters.get("account") or (filters.get("party") and len(filters.party) == 1):
+		filters["company_currency"] = frappe.get_cached_value(
+			"Company", filters.company, "default_currency"
+		)
+		account_currency = None
+
+		if filters.get("account"):
+			if len(filters.get("account")) == 1:
+				account_currency = get_account_currency(filters.account[0])
+			else:
+				currency = get_account_currency(filters.account[0])
+				is_same_account_currency = True
+				for account in filters.get("account"):
+					if get_account_currency(account) != currency:
+						is_same_account_currency = False
+						break
+
+				if is_same_account_currency:
+					account_currency = currency
+
+		elif filters.get("party"):
+			gle_currency = frappe.db.get_value(
+				"GL Entry",
+				{"party_type": filters.party_type, "party": filters.party[0], "company": filters.company},
+				"account_currency",
 			)
-            account_currency = None
-            
-            if filters.get("account"):
-                if len(filters.get("account")) == 1:
-                    account_currency = get_account_currency(filters.account[0])
-                else:
-                    currency = get_account_currency(filters.account[0])
-                    is_same_account_currency = True
-                    for account in filters.get("account"):
-                        if get_account_currency(account) != currency:
-                            is_same_account_currency = False
-                            break
-                    
-                    if is_same_account_currency:
-                        account_currency = currency
-                        
-            elif filters.get("party"):
-                gle_currency = frappe.db.get_value(
-					"GL Entry",
-					{"party_type": filters.party_type, "party": filters.party[0], "company": filters.company},
-					"account_currency",
+
+			if gle_currency:
+				account_currency = gle_currency
+			else:
+				account_currency = (
+					None
+					if filters.party_type in ["Employee", "Student", "Shareholder", "Member"]
+					else frappe.db.get_value(filters.party_type, filters.party[0], "default_currency")
 				)
 
-				if gle_currency:
-					account_currency = gle_currency
-				else:
-					account_currency = (
-						None
-						if filters.party_type in ["Employee", "Student", "Shareholder", "Member"]
-						else frappe.db.get_value(filters.party_type, filters.party[0], "default_currency")
-					)
-				
-			filters["account_currency"] = account_currency or filters.company_currency
-       		if filters.account_currency != filters.company_currency and not filters.presentation_currency:
-				filters.presentation_currency = filters.account_currency
+		filters["account_currency"] = account_currency or filters.company_currency
+		if filters.account_currency != filters.company_currency and not filters.presentation_currency:
+			filters.presentation_currency = filters.account_currency
 
-		return filters
+	return filters
 
 
 def get_result(filters, account_details):
 	accounting_dimensions = []
-	if filters.get("party") != None:
+	if filters.get("party") and filters.get("party_group") != None:
 		if filters.get("include_dimensions"):
 			accounting_dimensions = get_accounting_dimensions()
 
