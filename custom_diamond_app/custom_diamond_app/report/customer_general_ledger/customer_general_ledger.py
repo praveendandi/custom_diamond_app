@@ -52,6 +52,7 @@ def execute(filters=None):
 	update_translations()
 
 	res = get_result(filters, account_details)
+ 
 
 	return columns, res
 
@@ -151,7 +152,7 @@ def set_account_currency(filters):
 
 def get_result(filters, account_details):
 	accounting_dimensions = []
-	if filters.get("party") and filters.get("party_group") != None:
+	if filters.get("party_group") and filters.get('party'):
 		if filters.get("include_dimensions"):
 			accounting_dimensions = get_accounting_dimensions()
 
