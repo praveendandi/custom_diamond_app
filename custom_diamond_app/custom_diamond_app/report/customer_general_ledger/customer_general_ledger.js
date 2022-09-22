@@ -74,6 +74,7 @@ frappe.query_reports["Customer General Ledger"] = {
 			"label":__("Party Group"),
 			"fieldtype":'Link',
 			'options':'Customer Group',
+			'default':"",
 			// 'onchange':function(){
 			// 	console.log("hello")
 			// }
