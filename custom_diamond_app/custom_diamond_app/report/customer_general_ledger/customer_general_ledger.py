@@ -152,17 +152,18 @@ def set_account_currency(filters):
 
 def get_result(filters, account_details):
 	accounting_dimensions = []
-	if filters.get("party_group") and filters.get('party'):
-		if filters.get("include_dimensions"):
-			accounting_dimensions = get_accounting_dimensions()
+	if filters.get("party_group"):
+		if filters.get('party'):
+			if filters.get("include_dimensions"):
+				accounting_dimensions = get_accounting_dimensions()
 
-		gl_entries = get_gl_entries(filters, accounting_dimensions)
+				gl_entries = get_gl_entries(filters, accounting_dimensions)
 
-		data = get_data_with_opening_closing(filters, account_details, accounting_dimensions, gl_entries)
+				data = get_data_with_opening_closing(filters, account_details, accounting_dimensions, gl_entries)
 
-		result = get_result_as_list(data, filters)
+				result = get_result_as_list(data, filters)
 
-		return result
+				return result
 
 
 def get_gl_entries(filters, accounting_dimensions):
