@@ -77,22 +77,71 @@ frappe.query_reports["Customer General Ledger"] = {
 			'default':"",
 			// 'onchange':function(){
 			// 	console.log("hello")
-			// }
+			// },
 			// 'default':,
 			
-			// get_data:function(){
-			// 	data = frappe.db.get_list('party_type','party_group',fields=['customer_name'])
-			// 	console.log(data)
-			// }
+			get_data:function(){
+				
+				console.log(data)
+			}
 		},
+		// {
+		// 	'fieldname':'sub_party',
+		// 	'label':__("Sub Party"),
+		// 	'fieldtype':'MultiSelectList',
+		// 	'default':"",
+		// 	get_data:function(txt){
+		// 		return frappe.db.get_link_options("Customer Group",txt,{
+		// 			parent_customer_group: frappe.query_report.get_filter_value("party_group")
+		// 		})
+		// 	}
+		// },
 		{
 			'fieldname':'party',
 			'label':__("Party"),
 			'fieldtype':'MultiSelectList',
 			'default':"",
 			get_data:function(txt){
-				return frappe.db.get_link_options("Customer",txt,{
-					customer_group: frappe.query_report.get_filter_value("party_group")
+				return new Promise((resolve,reject)=>{
+				
+					 frappe.call({
+						method: "frappe.client.get_list",
+						args: {
+							doctype: "Customer Group",
+							fields:['*'],
+							filters: {
+								parent_customer_group: ["=", frappe.query_report.get_filter_value("party_group")],
+							},
+						},
+						callback: function(r, rt) {
+							console.log('----------',r.message.length)
+							if( r.message.length) {
+								let arra= []
+								r.message.forEach((res)=>{
+									let data =frappe.db.get_link_options("Customer",txt,{
+										customer_group: res.customer_group_name
+									})
+									data.then((ev)=>{
+										ev.forEach(element => {
+											console.log(element)
+											arra.push(element)
+										});
+										
+									})
+								})
+								setTimeout(() => {
+									resolve(arra)
+								}, 3000);
+							}else{
+								let data =frappe.db.get_list('Customer', { 
+									filters: {
+										 customer_group: frappe.query_report.get_filter_value("party_group"), 
+								},
+								fields: ["name as label","name as value","customer_name as description" ], limit: 500, });
+								resolve(data)
+							}
+						}
+					});
 				})
 			},
 		},
@@ -195,6 +244,7 @@ erpnext.utils.add_dimensions('Customer General Ledger', 15)
 
 $(document).ready(function() {
 	console.log('fggggggggggggg')
+	
 	setTimeout(() => {
 		let party_group = document.querySelectorAll('input[data-fieldname="party_group"]')[0]
 	party_group.addEventListener('click', function(event){
