@@ -85,12 +85,11 @@ def make_delivery_note(source_name, target_doc=None, skip_item_mapping=False):
 			"condition": condition,
 		}
 
-	target_doc = get_mapped_doc("Sales Order", source_name, mapper, target_doc, set_missing_values)
+	# target_doc = get_mapped_doc("Sales Order", source_name, mapper, target_doc, set_missing_values)
 
-	target_doc.set_onload("ignore_price_list", True)
+	# target_doc.set_onload("ignore_price_list", True)
 
-	return target_doc
-
+	# return target_doc
 
 # @frappe.whitelist()
 # def update_item_details_erp(doc,method=None):
