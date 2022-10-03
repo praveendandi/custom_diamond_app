@@ -143,9 +143,9 @@ fixtures = [
 # override_whitelisted_methods = {
 # 	"frappe.desk.doctype.event.event.get_events": "custom_diamond_app.event.get_events"
 # }
-# override_whitelisted_methods = {
-#     "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note":"custom_diamond_app.events.make_delivery_note"
-# }
+override_whitelisted_methods = {
+    "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note":"custom_diamond_app.events.make_delivery_note"
+}
 
 #
 # each overriding function accepts a `data` argument;
