@@ -12,7 +12,7 @@
   "docstatus": 0,
   "doctype": "Custom Field",
   "dt": "Item Price",
-  "fetch_from": null,
+  "fetch_from": "item_code.item_group",
   "fetch_if_empty": 0,
   "fieldname": "item_group",
   "fieldtype": "Data",
