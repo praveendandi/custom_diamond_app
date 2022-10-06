@@ -50,7 +50,7 @@ fixtures = [
                 'Sales Invoice-double_carton',
                 'Sales Invoice-total_no_of_carton',
                 'Delivery Note Item-quantity_in_sales_order_',
-                'Item Price-item_group',          
+                'Item Price-item_group',                          
                 ]
         ]]
     },
