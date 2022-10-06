@@ -105,11 +105,11 @@ fixtures = [
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"Item": {
-# 		"on_update": "custom_diamond_app.events.update_item_details_erp",
-# 	}
-# }	
+doc_events = {
+	"Item": {
+		"on_update": "custom_diamond_app.events.update_item_details_erp",
+	}
+}	
 
 # Scheduled Tasks
 # ---------------

@@ -1,5 +1,6 @@
 
 import json
+from warnings import filters
 
 import frappe
 import frappe.utils
@@ -91,11 +92,13 @@ def make_delivery_note(source_name, target_doc=None, skip_item_mapping=False):
 
 	return target_doc
 
-# @frappe.whitelist()
-# def update_item_details_erp(doc,method=None):
-#     print(doc.name,"++++++++++++++++++++++++++++=")
-#     # new_doc = frappe.get_doc("Item Price",doc.name)
-#     get_data = frappe.get_doc("Item Price",{"item_code":doc.item_code})
-#     print(get_data,"//////")
-#     # frappe.db.set_value("Item Price", doc.item_code,{'item_code':doc.name,"item_name":doc.item_name,"item_group":doc.item_group})
-#     # frappe.db.commit()
+@frappe.whitelist()
+def update_item_details_erp(doc,method=None):
+    get_list = frappe.db.get_list("Item Price", filters={"item_code":doc.name})
+    print(get_list)
+    if len(get_list)>0:
+        for each in get_list:
+            frappe.db.set_value("Item Price", each["name"],{"Item_name":doc.item_name, "item_group":doc.item_group})
+            frappe.db.commit()
+            
+        
