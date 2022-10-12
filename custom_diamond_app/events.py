@@ -102,7 +102,7 @@ def update_item_details_erp(doc,method=None):
             frappe.db.set_value("Item Price", each["name"],{"Item_name":doc.item_name, "item_group":doc.item_group})
             frappe.db.commit()
             
-def sales_order_overdue_validation_count(doc,method=None):
+def sales_order_overdue_validation(doc,method=None):
     print(doc,"****************************")
     get_sales_invoice = frappe.db.get_list("Sales Invoice",filters={'customer':doc.customer,'status':'overdue'},fields=['customer','status','name','grand_total','posting_date'],order_by='posting_date asc')
     print("sales invoice",get_sales_invoice)
