@@ -109,7 +109,10 @@ fixtures = [
 doc_events = {
 	"Item": {
 		"on_update": "custom_diamond_app.events.update_item_details_erp",
-	}
+	},
+  	"Sales Order": {
+		"on_submit":"custom_diamond_app.events.sales_order_overdue_validation_count"
+	},
 }	
 
 # Scheduled Tasks
