@@ -26,6 +26,7 @@ from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
 from erpnext.stock.doctype.item.item import get_item_defaults
 from erpnext.stock.get_item_details import get_default_bom
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
+from datetime import date, datetime
 
 
 @frappe.whitelist()
@@ -101,4 +102,44 @@ def update_item_details_erp(doc,method=None):
             frappe.db.set_value("Item Price", each["name"],{"Item_name":doc.item_name, "item_group":doc.item_group})
             frappe.db.commit()
             
-        
+def sales_order_overdue_validation_count(doc,method=None):
+    print(doc,"****************************")
+    get_sales_invoice = frappe.db.get_list("Sales Invoice",filters={'customer':doc.customer,'status':'overdue'},fields=['customer','status','name','grand_total','posting_date'],order_by='posting_date asc')
+    print("sales invoice",get_sales_invoice)
+    for invoice in get_sales_invoice:
+        print(invoice["posting_date"],"*************", datetime.date.today())
+        date_1 = (datetime.date.today()-invoice["posting_date"]).days
+        print(date_1,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        if date_1 > 90:
+            roles = get_roles(user=None,with_standard=True)
+            # print(roles,"==================+++++++==========================")
+            if "Customer Sales Invoices overdue 90 Days Sales order Approval" not in roles:
+            # if not frappe.session.user == 'Administrator':
+            # if not frappe.session.role == 'Stock User':
+                frappe.throw("this customer have unpaid or overdue invoice over 90 days which is not completed, Please complete {}, or  Only this Role (Customer Sales Invoices overdue 90 Days Sales order Approval) have submit permissions".format(invoice.name))
+
+        else:
+            print("$$$$$$$$$$$$$$$$$")
+ 
+            #test comment 
+            #test comment 
+            
+def get_roles(user=None, with_standard=True):
+
+    if not user:
+        user = frappe.session.user
+    if user == 'Guest':
+        return ['Guest']
+    def get():
+        return [r[0] for r in frappe.db.sql("""select role from `tabUserRole`
+            where parent=%s and role not in ('All', 'Guest')""", (user,))] + ['All', 'Guest']
+
+    roles = frappe.cache().hget("roles", user, get)
+    print(roles,"////////////////")
+
+    if not with_standard:
+        roles = filter(lambda x: x not in ['All', 'Guest', 'Administrator'], roles)
+    
+    print(roles,",,,,,,,,,,,,,,,,,,,,,,,,,,,,,")
+    
+    return roles
