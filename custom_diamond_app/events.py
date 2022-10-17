@@ -114,6 +114,8 @@ def sales_order_overdue_validation(doc,method=None):
         date_1 = (datetime.date.today()-invoice["posting_date"]).days
         print(date_1,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         if date_1 > 90:
+            frappe.db.set_value("Sales Order", doc.name, {"status":"On Hold"})
+            frappe.db.commit()
             roles = get_roles(user=None,with_standard=True)
             # print(roles,"==================+++++++==========================")
             if "Customer Sales Invoices overdue 90 Days Sales order Approval" not in roles:
@@ -121,8 +123,6 @@ def sales_order_overdue_validation(doc,method=None):
             # if not frappe.session.role == 'Stock User':
                 frappe.throw("this customer have unpaid or overdue invoice over 90 days which is not completed, Please complete {}, or  Only this Role (Customer Sales Invoices overdue 90 Days Sales order Approval) have submit permissions".format(invoice.name))
                 
-            frappe.db.set_value("Sales Order", doc.name, {"status":"On Hold"})
-            frappe.db.commit()
         else:
             print("$$$$$$$$$$$$$$$$$")
  
