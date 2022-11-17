@@ -1,6 +1,5 @@
-# Copyright (c) 2022, Ganu Reddy and contributors
+# Copyright (c) 2022, kiran and contributors
 # For license information, please see license.txt
-
 
 import frappe
 from frappe import _, scrub
@@ -133,5 +132,3 @@ def execute(filters=None):
 		"naming_by": ["Buying Settings", "supp_master_name"],
 	}
 	return AccountsReceivableSummary(filters).run(args)
-
-
