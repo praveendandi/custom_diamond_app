@@ -103,7 +103,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 		self.columns = []
 		if self.party_naming_by == "Naming Series":
 			self.add_column(_("Bank Account Number"),fieldname="bank_account_number", fieldtype="Int")
-			self.add_column(_("Outstanding Amount"), fieldname="outstanding")
+			self.add_column(_("Amount"), fieldname="outstanding")
 			self.add_column(_("{0} Name").format(self.party_type), fieldname="party_name", fieldtype="Data")
 			self.add_column(label=_(self.party_type),fieldname="party",fieldtype="Link",
 						options=self.party_type,width=180,)
