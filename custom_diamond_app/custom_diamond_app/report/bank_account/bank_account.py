@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 import frappe
+from frappe import utils
+from frappe.utils import today
 from frappe import _, scrub
 from frappe.utils import cint, flt
 from six import iteritems
@@ -9,6 +11,7 @@ from six import iteritems
 from erpnext.accounts.party import get_partywise_advanced_payment_amount
 from erpnext.accounts.report.accounts_receivable.accounts_receivable import ReceivablePayableReport
 from erpnext.accounts.doctype.bank_account import bank_account
+from datetime import date
 
 def execute(filters=None):
 	args = {
@@ -113,7 +116,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 
 		if self.filters.show_sales_person:
 			self.add_column(label=_("Sales Person"), fieldname="sales_person", fieldtype="Data")
-	
+		self.add_column(frappe.utils.formatdate(today(), "dd-MM-yyyy"))
 
 def get_gl_balance(report_date):
 	return frappe._dict(

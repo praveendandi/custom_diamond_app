@@ -51,7 +51,7 @@ fixtures = [
                 'Sales Invoice-total_no_of_carton',
                 'Delivery Note Item-quantity_in_sales_order_',
                 'Item Price-item_group',
-                'Delivery Note Item-packed_quantity',                      
+                'Delivery Note Item-packed_quantity',
                 ]
         ]]
     },
