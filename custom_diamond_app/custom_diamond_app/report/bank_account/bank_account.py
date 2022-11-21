@@ -57,7 +57,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 				continue
 
 			row = frappe._dict()
-
+			
 			row.party = party
 			if self.party_naming_by == "Naming Series":
 				row.party_name = frappe.get_cached_value(
@@ -75,9 +75,12 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 
 			# Advance against party
 			row.advance = party_advance_amount.get(party, 0)
+			# export_date = []
 			if self.filters.show_gl_balance:
 				row.gl_balance = gl_balance_map.get(party)
 				row.diff = flt(row.outstanding) - flt(row.gl_balance)
+				# row.export_date = frappe.utils.formatdate(today(), "dd-MM-yyyy")
+				# print(export_date,"000000000000000000000000")
 			self.data.append(row)
 
 	def get_party_total(self, args):
@@ -101,22 +104,25 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 				},
 			),
 		)
-		
+                                        	
 	def get_columns(self):
 		self.columns = []
 		if self.party_naming_by == "Naming Series":
 			self.add_column(_("Bank Account Number"),fieldname="bank_account_number", fieldtype="Int")
 			self.add_column(_("Amount"), fieldname="outstanding")
+			self.add_column(_("Account Name"),fieldname="account_name", fieldtype="Data")
 			self.add_column(_("{0} Name").format(self.party_type), fieldname="party_name", fieldtype="Data")
 			self.add_column(label=_(self.party_type),fieldname="party",fieldtype="Link",
 						options=self.party_type,width=180,)
+			self.add_column(_("Export date"))
 			self.add_column(_("Branch Code"), fieldname="branch_code", fieldtype="Data")
 			self.add_column(_("Bank"),fieldname="bank", fieldtype="Data")
-			self.add_column(_("Account Name"),fieldname="account_name", fieldtype="Data")
+			# self.add_column(_("Email Id"), fieldname="email_id", fieldtype="Data")
+			# self.add_column(_("Account Name"),fieldname="account_name", fieldtype="Data")
 
 		if self.filters.show_sales_person:
 			self.add_column(label=_("Sales Person"), fieldname="sales_person", fieldtype="Data")
-		self.add_column(frappe.utils.formatdate(today(), "dd-MM-yyyy"))
+		
 
 def get_gl_balance(report_date):
 	return frappe._dict(
