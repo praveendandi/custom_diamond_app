@@ -113,6 +113,9 @@ doc_events = {
   	"Sales Order": {
 		"on_submit":"custom_diamond_app.events.sales_order_overdue_validation",
 	},
+    "Sales Invoice":{
+       "on_update":"custom_diamond_app.events.update_addition_discount",
+   },
    
 }	
 
