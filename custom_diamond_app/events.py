@@ -149,24 +149,32 @@ def get_roles(user=None, with_standard=True):
     
     return roles
 
-
 def update_addition_discount(doc,method=None):
-    print(doc,doc.items[0].additional_customer_discount,doc.customer_discount_category,";;;;;;;;;;;;;;;;")
+    print(doc,doc.items,doc.customer_discount_category,";;;;;;;;;;;;;;;;")
     # print(doc,doc.pricing_rules[0].item_code,doc.pricing_rules[0].pricing_rule,"////////////////")
-    discount = doc.items[0].additional_customer_discount
+    # discount = doc.items[0].additional_customer_discount
     item_groups = None
-    
+    discounts = []
+    for j in range(len(doc.items)):
+        discount = doc.items[j].additional_customer_discount
+        discounts.insert(0,discount)        
     for i in doc.pricing_rules:
         item_value = i.item_code
         pricing_value = i.pricing_rule
         if frappe.db.exists("Pricing Rule", {"name": pricing_value,'sytem_generated':'Yes'}):
-            frappe.db.set_value('Pricing Rule',pricing_value,{'discount_percentage':discount})
+            print(i.pricing_rule,"///////pppppppppp")
+            print( i.item_code,",,,,,,,,,,,")
+            print("pass")
+            frappe.db.set_value('Pricing Rule',pricing_value,{'discount_percentage':discounts[-1]})
+            print(discounts[-1])
             frappe.db.commit()
             
             item_groups = frappe.db.sql('''select item_group from `tabPricing Rule Item Group` Where parent = '{}' '''.format(pricing_value),as_dict=1)
             
-    if item_groups:
-        item_group = item_groups[0].get('item_group')
-        discount_defini = doc.customer_discount_category   
-        frappe.db.set_value('Discount Definitions Item',{'parent':discount_defini,'item_group':item_group},{'amount':discount})
-        frappe.db.commit()
+            if item_groups:
+                item_group = item_groups[0].get('item_group')
+                discount_defini = doc.customer_discount_category   
+                frappe.db.set_value('Discount Definitions Item',{'parent':discount_defini,'item_group':item_group},{'amount':discounts[-1]})
+                frappe.db.commit()
+                
+            discounts.pop()
