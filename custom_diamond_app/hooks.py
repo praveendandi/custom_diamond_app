@@ -49,10 +49,13 @@ fixtures = [
                 'Sales Invoice-single_carton',
                 'Sales Invoice-double_carton',
                 'Sales Invoice-total_no_of_carton',
+                'Sales Order Item-additional_customer_discount',
+                'Sales Invoice Item-additional_customer_discount',
                 'Delivery Note Item-quantity_in_sales_order_',
                 'Item Price-item_group',
                 'Delivery Note Item-packed_quantity',
                 'Delivery Note-customer_discount_category',
+                'additional_customer_discount-additional_customer_discount',
                 ]
         ]]
     },
