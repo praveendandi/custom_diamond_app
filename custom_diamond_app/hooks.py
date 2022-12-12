@@ -58,6 +58,7 @@ fixtures = [
                 'Delivery Note Item-additional_customer_discount',
                 'Purchase Order-supplier_group',
                 'Purchase Receipt-supplier_group',
+                'Purchase Invoice-supplier_group',
                 ]
         ]]
     },
