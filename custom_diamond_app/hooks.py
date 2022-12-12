@@ -55,7 +55,7 @@ fixtures = [
                 'Item Price-item_group',
                 'Delivery Note Item-packed_quantity',
                 'Delivery Note-customer_discount_category',
-                'additional_customer_discount-additional_customer_discount',
+                'Delivery Note Item-additional_customer_discount',
                 ]
         ]]
     },
