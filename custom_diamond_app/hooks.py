@@ -62,6 +62,9 @@ fixtures = [
                 'Delivery Note Item-check',
                 'Sales Order-item_category',
                 'Delivery Note-item_category',
+                'Delivery Note-single_carton',
+                'Delivery Note-double_carton',
+                'Delivery Note-total_no_of_carton',
                 ]
         ]]
     },
