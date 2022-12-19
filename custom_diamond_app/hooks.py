@@ -61,6 +61,7 @@ fixtures = [
                 'Purchase Invoice-supplier_group',
                 'Delivery Note Item-check',
                 'Sales Order-item_category',
+                'Sales Order-narration',
                 'Delivery Note-item_category',
                 'Delivery Note-single_carton',
                 'Delivery Note-double_carton',
