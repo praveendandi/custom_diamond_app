@@ -249,8 +249,8 @@ def data_shift_api(name):
     
     file_address = f"{files}.xlsx"
     home = str(Path.home())
-    last_sd = "/Desktop"
-    site_loc = home+last_sd+"/"+file_address
+    # last_sd = "/Desktop"
+    site_loc = home+"/"+file_address
     
     
     # print(df,"//////////////////////")
