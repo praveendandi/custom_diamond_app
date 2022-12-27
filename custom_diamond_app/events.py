@@ -3,6 +3,9 @@ import json
 from warnings import filters
 
 import frappe
+import pandas as pd
+import os
+from pathlib import Path
 import frappe.utils
 from frappe import _
 from frappe.contacts.doctype.address.address import get_company_address
@@ -181,7 +184,77 @@ def get_roles(user=None, with_standard=True):
             
             
             
+# @frappe.whitelist()
+# def call_me():
+#     print("TEST __________--------------------------------") 
+# #   msgprint("call me")
+
+
 @frappe.whitelist()
-def call_me():
-    print("TEST __________--------------------------------") 
-#   msgprint("call me")
+def data_shift_api(name):
+   
+    
+    data = frappe.db.sql("""Select customer,company,currency,conversion_rate,selling_price_list,price_list_currency
+                         from `tabDelivery Note` Where name = '{name}' """.format(name=name),as_dict=1
+                        )
+    modify_data = []
+    for i in data:
+        value = {}
+        if "customer" in i:
+            value['Customer'] = i.get('customer')
+        if "company" in i:
+            value['Company'] = i.get('company')
+        if "currency" in i:
+            value['Currency'] = i.get('currency')
+        if "conversion_rate" in i:
+            value['Exchange Rate'] = i.get('conversion_rate')
+        if 'selling_price_list' in i:
+            value['Price List'] = i.get('selling_price_list')
+        if 'price_list_currency' in i:
+            value['Price List Currency'] = i.get('price_list_currency')
+            
+        modify_data.append(value)
+        
+   
+    items_data = frappe.db.sql('''Select item_code,item_name,description,qty,
+                               stock_uom ,uom ,conversion_factor from `tabDelivery Note Item`
+                               Where parent = '{name}'
+                               '''.format(name=name),as_dict=1)
+    
+    modify_items = []
+    for j in items_data:
+        value = {}
+        if "item_code" in j:
+            value["Item Code (Items)"] = j.get("item_code")
+        if "item_name" in j:
+            value["Item Name (Items)"] = j.get("item_name")
+        if "description" in j:
+            value["Description (Items)"] = j.get("description")
+        if "qty" in j:
+            value["Packed Qty (Items)"] = j.get("qty")
+        if "stock_uom" in j:
+            value["UOM (Items)"] = j.get("stock_uom")
+        if "uom" in j:
+            value["Sales Order UOM (Items)"] = j.get("uom")
+        if "conversion_factor" in j:
+            value["UOM Conversion Factor (Items)"] = j.get("conversion_factor")
+            
+        modify_data.append(value)
+        
+    new_data = modify_data + modify_items
+    df = pd.DataFrame.from_records(new_data)
+    
+    files = name
+    # print(files,"////////////////")
+    
+    file_address = f"{files}.xlsx"
+    home = str(Path.home())
+    last_sd = "/Desktop"
+    site_loc = home+last_sd+"/"+file_address
+    
+    
+    # print(df,"//////////////////////")
+    df.to_excel(site_loc, index=False)
+    
+
+    # print(new_data,"................................")
