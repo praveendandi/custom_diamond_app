@@ -243,18 +243,27 @@ def data_shift_api(name):
         
     new_data = modify_data + modify_items
     df = pd.DataFrame.from_records(new_data)
+    file_name = f"{name}.xlsx"
     
-    files = name
-    # print(files,"////////////////")
+    home_address = str(Path.home())
     
-    file_address = f"{files}.xlsx"
-    home = str(Path.home())
-    # last_sd = "/Desktop"
-    site_loc = home+"/"+file_address
+    if not os.path.exists(home_address):
+        os.makedirs(home_address)
+    
+    path="".join("{}/{}".format(home_address, file_name))
+    df.to_excel(path, index=False)
+    
+    # files = name
+    # # print(files,"////////////////")
+    
+    # file_address = f"{files}.xlsx"
+    # home = str(Path.home())
+    # # last_sd = "/Desktop"
+    # site_loc = home+"/"+file_address
     
     
-    # print(df,"//////////////////////")
-    df.to_excel(site_loc, index=False)
+    # # print(df,"//////////////////////")
+    # df.to_excel(site_loc, index=False)
     
 
     # print(new_data,"................................")
