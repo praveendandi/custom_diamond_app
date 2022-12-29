@@ -131,6 +131,10 @@ doc_events = {
   	"Sales Order": {
 		"on_submit":"custom_diamond_app.events.sales_order_overdue_validation",
 	},
+   "Purchase Receipt": {
+        "before_submit":"custom_diamond_app.events.stock_entry_after_submit_purchase_recipt"
+    },
+
 }	
 
 # Scheduled Tasks

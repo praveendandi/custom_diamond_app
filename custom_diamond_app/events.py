@@ -252,14 +252,14 @@ def data_shift_api(name):
 def stock_entry_after_submit_purchase_recipt(doc,method=None):
     if doc.is_subcontracted == "Yes":
         supplier_warehouse = doc.supplier_warehouse
-        print(supplier_warehouse,"......................")
+        # print(supplier_warehouse,"......................")
         for i in range(len(doc.items)):
             item_codes = doc.items[i].item_code
-            print(item_codes,"////////////////")
+            # print(item_codes,"////////////////")
             accepted_quantity = doc.items[i].qty
             print(accepted_quantity,"////////////") 
             bom_no = frappe.db.get_value("BOM",{"item":item_codes},"name")
-            print(bom_no,"/////////////////")
+            # print(bom_no,"/////////////////")
             doc_insert = frappe.get_doc("Stock Entry",{"stock_entry_type":"Material Consumption for Manufacture","from_bom":1,})
             doc_insert.bom_no = bom_no
             doc_insert.fg_completed_qty = accepted_quantity
