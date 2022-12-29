@@ -14,6 +14,7 @@ from frappe.model.mapper import get_mapped_doc
 from frappe.model.utils import get_fetch_values
 from frappe.utils import add_days, cint, cstr, flt, get_link_to_form, getdate, nowdate, strip_html
 from six import string_types
+import time
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
 	unlink_inter_company_doc,
@@ -206,20 +207,18 @@ def data_shift_api(name):
         
     new_data = modify_data + modify_items
     df = pd.DataFrame.from_records(new_data)
-    file_name = f"{name}.xlsx"
-    
-    site_name = cstr(frappe.local.site)
     folder_path = frappe.utils.get_bench_path()
-    site_loc = (
-                    folder_path
-                    + "/sites/"
-                    + site_name
-                )
-    
-    output_file_path = site_loc + \
-                    "/public/files/"+file_name
+    site_name = frappe.utils.cstr(frappe.local.site)
+    xl_file_path = (folder_path+ "/sites/"+ site_name)
+    file_name = f"{name}.xlsx"
+    epoch = str(round(time.time() * 1000))
+    file_path = '/files/'+name+epoch+".xlsx"
+    serve_file_path =name+epoch+".xlsx"
+    output_file_path = xl_file_path + "/public"+file_path
                     
     df.to_excel(output_file_path, index=False)
+    
+    return {"success":True,"file_path":file_path}
     
     # home_address = str(Path.home())
     
@@ -245,3 +244,25 @@ def data_shift_api(name):
     
 
     # print(new_data,"................................")
+    
+    
+def stock_entry_after_submit_purchase_recipt(doc,method=None):
+    if doc.is_subcontracted == "Yes":
+        supplier_warehouse = doc.supplier_warehouse
+        print(supplier_warehouse,"......................")
+        for i in range(len(doc.items)):
+            item_codes = doc.items[i].item_code
+            print(item_codes,"////////////////")
+            accepted_quantity = doc.items[i].qty
+            print(accepted_quantity,"////////////") 
+            bom_no = frappe.db.get_value("BOM",{"item":item_codes},"name")
+            print(bom_no,"/////////////////")
+            doc_insert = frappe.get_doc("Stock Entry",{"stock_entry_type":"Material Consumption for Manufacture","from_bom":1,})
+            doc_insert.bom_no = bom_no
+            doc_insert.fg_completed_qty = accepted_quantity
+            doc_insert.get_items = 1
+            doc_insert.from_warehouse = supplier_warehouse
+            doc_insert.docstatus = 0
+            
+            doc_insert.insert()
+        # doc_insert.submit()
