@@ -1,0 +1,59 @@
+[33mcommit b6e5cc224677fdc0c884ff71103ef89376b094b0[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: Ganu Reddy <ganu.b@caratred.com>
+Date:   Fri Dec 23 13:09:25 2022 +0530
+
+    item price rule update code comment
+
+[33mcommit 08ec81e66e07b6714e02f2b2a6030243cc0b4a15[m[33m ([m[1;31mupstream/master[m[33m)[m
+Author: Ganu Reddy <ganu.b@caratred.com>
+Date:   Wed Dec 21 18:38:41 2022 +0530
+
+    fields removed
+
+[33mcommit 1bb02ca1b5278db16403b39925622ab6aa66af5f[m
+Author: Ganu Reddy <ganu.b@caratred.com>
+Date:   Wed Dec 21 15:41:26 2022 +0530
+
+    transpoter mapped in customer master
+
+[33mcommit 8658265989cba3157d0739a677ddd9b551575ccb[m
+Author: Ganu Reddy <ganu.b@caratred.com>
+Date:   Mon Dec 19 17:08:47 2022 +0530
+
+    narration added in sales order
+
+[33mcommit be45712a363724d1d2e42f7716bcb30edb0bbe06[m
+Author: kiran <kiran@caratred.com>
+Date:   Fri Dec 16 17:43:58 2022 +0530
+
+    fields added in delivery note
+
+[33mcommit a72ccfde66015e56a2e59048e7e343d957954533[m
+Author: kiran <kiran@caratred.com>
+Date:   Thu Dec 15 17:59:00 2022 +0530
+
+    item Category field added in sales order and delivery note doc
+
+[33mcommit c6101425a559b98f63b9a5e45222ff208afa137c[m
+Author: kiran <kiran@caratred.com>
+Date:   Thu Dec 15 13:55:44 2022 +0530
+
+    check field added in delivery note item table
+
+[33mcommit 6a9c0dfb493bbed5cbd2b968b3fcddc7fdcaa3a6[m
+Author: kiran <kiran@caratred.com>
+Date:   Mon Dec 12 15:59:24 2022 +0530
+
+    supplier group added in purchase invoice
+
+[33mcommit 2f0baccd19818ce0e425ec3877f33ac4f1bf7485[m
+Author: kiran <kiran@caratred.com>
+Date:   Mon Dec 12 15:21:49 2022 +0530
+
+    supplier group added in purchase Receipt
+
+[33mcommit c6312ec541f2fae5a5fa24621f2c8613a1aead3d[m
+Author: kiran <kiran@caratred.com>
+Date:   Mon Dec 12 15:10:20 2022 +0530
+
+    supplier group added in purchase order

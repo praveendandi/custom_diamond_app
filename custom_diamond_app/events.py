@@ -156,69 +156,72 @@ def get_roles(user=None, with_standard=True):
 
 @frappe.whitelist()
 def data_shift_api(name):
+    try:
    
     
-    data = frappe.db.sql("""Select customer,company,currency,conversion_rate,selling_price_list,price_list_currency
-                         from `tabDelivery Note` Where name = '{name}' """.format(name=name),as_dict=1
-                        )
-    modify_data = []
-    for i in data:
-        value = {}
-        if "customer" in i:
-            value['Customer'] = i.get('customer')
-        if "company" in i:
-            value['Company'] = i.get('company')
-        if "currency" in i:
-            value['Currency'] = i.get('currency')
-        if "conversion_rate" in i:
-            value['Exchange Rate'] = i.get('conversion_rate')
-        if 'selling_price_list' in i:
-            value['Price List'] = i.get('selling_price_list')
-        if 'price_list_currency' in i:
-            value['Price List Currency'] = i.get('price_list_currency')
+        data = frappe.db.sql("""Select customer,company,currency,conversion_rate,selling_price_list,price_list_currency
+                            from `tabDelivery Note` Where name = '{name}' """.format(name=name),as_dict=1
+                            )
+        modify_data = []
+        for i in data:
+            value = {}
+            if "customer" in i:
+                value['Customer'] = i.get('customer')
+            if "company" in i:
+                value['Company'] = i.get('company')
+            if "currency" in i:
+                value['Currency'] = i.get('currency')
+            if "conversion_rate" in i:
+                value['Exchange Rate'] = i.get('conversion_rate')
+            if 'selling_price_list' in i:
+                value['Price List'] = i.get('selling_price_list')
+            if 'price_list_currency' in i:
+                value['Price List Currency'] = i.get('price_list_currency')
+                
+            modify_data.append(value)
             
-        modify_data.append(value)
-        
-   
-    items_data = frappe.db.sql('''Select item_code,item_name,description,qty,
-                               stock_uom ,uom ,conversion_factor from `tabDelivery Note Item`
-                               Where parent = '{name}'
-                               '''.format(name=name),as_dict=1)
     
-    modify_items = []
-    for j in items_data:
-        value = {}
-        if "item_code" in j:
-            value["Item Code (Items)"] = j.get("item_code")
-        if "item_name" in j:
-            value["Item Name (Items)"] = j.get("item_name")
-        if "description" in j:
-            value["Description (Items)"] = j.get("description")
-        if "qty" in j:
-            value["Packed Qty (Items)"] = j.get("qty")
-        if "stock_uom" in j:
-            value["UOM (Items)"] = j.get("stock_uom")
-        if "uom" in j:
-            value["Sales Order UOM (Items)"] = j.get("uom")
-        if "conversion_factor" in j:
-            value["UOM Conversion Factor (Items)"] = j.get("conversion_factor")
+        items_data = frappe.db.sql('''Select item_code,item_name,description,qty,
+                                stock_uom ,uom ,conversion_factor from `tabDelivery Note Item`
+                                Where parent = '{name}'
+                                '''.format(name=name),as_dict=1)
+        
+        modify_items = []
+        for j in items_data:
+            value = {}
+            if "item_code" in j:
+                value["Item Code (Items)"] = j.get("item_code")
+            if "item_name" in j:
+                value["Item Name (Items)"] = j.get("item_name")
+            if "description" in j:
+                value["Description (Items)"] = j.get("description")
+            if "qty" in j:
+                value["Packed Qty (Items)"] = j.get("qty")
+            if "stock_uom" in j:
+                value["UOM (Items)"] = j.get("stock_uom")
+            if "uom" in j:
+                value["Sales Order UOM (Items)"] = j.get("uom")
+            if "conversion_factor" in j:
+                value["UOM Conversion Factor (Items)"] = j.get("conversion_factor")
+                
+            modify_data.append(value)
             
-        modify_data.append(value)
+        new_data = modify_data + modify_items
+        df = pd.DataFrame.from_records(new_data)
+        folder_path = frappe.utils.get_bench_path()
+        site_name = frappe.utils.cstr(frappe.local.site)
+        xl_file_path = (folder_path+ "/sites/"+ site_name)
+        file_name = f"{name}.xlsx"
+        epoch = str(round(time.time() * 1000))
+        file_path = '/files/'+name+epoch+".xlsx"
+        serve_file_path =name+epoch+".xlsx"
+        output_file_path = xl_file_path + "/public"+file_path
+                        
+        df.to_excel(output_file_path, index=False)
         
-    new_data = modify_data + modify_items
-    df = pd.DataFrame.from_records(new_data)
-    folder_path = frappe.utils.get_bench_path()
-    site_name = frappe.utils.cstr(frappe.local.site)
-    xl_file_path = (folder_path+ "/sites/"+ site_name)
-    file_name = f"{name}.xlsx"
-    epoch = str(round(time.time() * 1000))
-    file_path = '/files/'+name+epoch+".xlsx"
-    serve_file_path =name+epoch+".xlsx"
-    output_file_path = xl_file_path + "/public"+file_path
-                    
-    df.to_excel(output_file_path, index=False)
-    
-    return {"success":True,"file_path":file_path}
+        return {"success":True,"file_path":file_path}
+    except Exception as e:
+        return {"success":False,"message":str(e)}
     
     # home_address = str(Path.home())
     
