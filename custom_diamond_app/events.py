@@ -181,7 +181,7 @@ def data_shift_api(name):
             modify_data.append(value)
             
     
-        items_data = frappe.db.sql('''Select item_code,item_name,description,qty,
+        items_data = frappe.db.sql('''Select item_code,item_name,description,stock_qty,
                                 stock_uom ,uom ,conversion_factor from `tabDelivery Note Item`
                                 Where parent = '{name}'
                                 '''.format(name=name),as_dict=1)
@@ -195,14 +195,14 @@ def data_shift_api(name):
                 value["Item Name (Items)"] = j.get("item_name")
             if "description" in j:
                 value["Description (Items)"] = j.get("description")
-            if "qty" in j:
-                value["Packed Qty (Items)"] = j.get("qty")
+            if "stock_qty" in j:
+                value["Packed Qty (Items)"] = j.get("stock_qty")
             if "stock_uom" in j:
                 value["UOM (Items)"] = j.get("stock_uom")
-            if "uom" in j:
-                value["Sales Order UOM (Items)"] = j.get("uom")
-            if "conversion_factor" in j:
-                value["UOM Conversion Factor (Items)"] = j.get("conversion_factor")
+            # if "uom" in j:
+            #     value["Sales Order UOM (Items)"] = j.get("uom")
+            # if "conversion_factor" in j:
+            #     value["UOM Conversion Factor (Items)"] = j.get("conversion_factor")
                 
             modify_data.append(value)
             
