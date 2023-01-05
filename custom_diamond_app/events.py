@@ -255,17 +255,20 @@ def stock_entry_after_submit_purchase_recipt(doc,method=None):
         # print(supplier_warehouse,"......................")
         for i in range(len(doc.items)):
             item_codes = doc.items[i].item_code
-            # print(item_codes,"////////////////")
-            accepted_quantity = doc.items[i].qty
-            print(accepted_quantity,"////////////") 
-            bom_no = frappe.db.get_value("BOM",{"item":item_codes},"name")
-            # print(bom_no,"/////////////////")
-            doc_insert = frappe.get_doc("Stock Entry",{"stock_entry_type":"Material Consumption for Manufacture","from_bom":1,})
-            doc_insert.bom_no = bom_no
-            doc_insert.fg_completed_qty = accepted_quantity
-            doc_insert.get_items = 1
-            doc_insert.from_warehouse = supplier_warehouse
-            doc_insert.docstatus = 0
-            
-            doc_insert.insert()
+            if frappe.db.exists("BOM",{"item":item_codes},"name"):
+                print(item_codes,"////////////////")
+                accepted_qty = doc.items[i].stock_qty
+                print(accepted_qty,"////////////") 
+                bom_no = frappe.db.get_value("BOM",{"item":item_codes},"name")
+                print(bom_no,"/////////////////")
+                doc_insert = frappe.get_doc("Stock Entry",{"stock_entry_type":"Material Consumption for Manufacture","from_bom":1,})
+                doc_insert.bom_no = bom_no
+                doc_insert.fg_completed_qty = accepted_qty
+                doc_insert.get_items = 1
+                doc_insert.from_warehouse = supplier_warehouse
+                doc_insert.docstatus = 0
+                
+                doc_insert.insert()
+            else:
+                frappe.throw("BOM Not Exists for Item {}".format(item_codes))
         # doc_insert.submit()
