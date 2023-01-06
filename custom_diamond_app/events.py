@@ -159,7 +159,7 @@ def data_shift_api(name):
     try:
    
     
-        data = frappe.db.sql("""Select customer,company,currency,conversion_rate,selling_price_list,price_list_currency
+        data = frappe.db.sql("""Select customer,company,currency,conversion_rate,selling_price_list,price_list_currency,customer_discount_category
                             from `tabDelivery Note` Where name = '{name}' """.format(name=name),as_dict=1
                             )
         modify_data = []
@@ -167,6 +167,8 @@ def data_shift_api(name):
             value = {}
             if "customer" in i:
                 value['Customer'] = i.get('customer')
+            if "customer_discount_category" in i:
+                value["Customer Discount Category"] = i.get('customer_discount_category')
             if "company" in i:
                 value['Company'] = i.get('company')
             if "currency" in i:
@@ -182,7 +184,7 @@ def data_shift_api(name):
             
     
         items_data = frappe.db.sql('''Select item_code,item_name,description,stock_qty,
-                                stock_uom ,uom ,conversion_factor from `tabDelivery Note Item`
+                                stock_uom ,uom ,conversion_factor,additional_customer_discount from `tabDelivery Note Item`
                                 Where parent = '{name}'
                                 '''.format(name=name),as_dict=1)
         
@@ -199,7 +201,9 @@ def data_shift_api(name):
                 value["Packed Qty (Items)"] = j.get("stock_qty")
             if "stock_uom" in j:
                 value["UOM (Items)"] = j.get("stock_uom")
-            # if "uom" in j:
+            if "additional_customer_discount" in j:
+                value["Additional Customer Discount (Items)"] = j.get("additional_customer_discount")
+            # if "uom" in j:\
             #     value["Sales Order UOM (Items)"] = j.get("uom")
             # if "conversion_factor" in j:
             #     value["UOM Conversion Factor (Items)"] = j.get("conversion_factor")
