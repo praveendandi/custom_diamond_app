@@ -68,6 +68,8 @@ fixtures = [
                 'Delivery Note-total_no_of_carton',
                 'Sales Invoice-lc_copy',
                 'Purchase Invoice-bill_copy',
+                'Delivery Note-narration',
+                'Sales Invoice-narration',
                 # 'Customer-transporter',
                 # 'Sales Order-transporter_id',
                 ]
