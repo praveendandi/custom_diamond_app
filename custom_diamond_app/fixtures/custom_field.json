@@ -715,7 +715,7 @@
   "in_list_view": 0,
   "in_preview": 0,
   "in_standard_filter": 0,
-  "insert_after": "transporter",
+  "insert_after": "tax_category",
   "label": "Transporter Name",
   "length": 0,
   "mandatory_depends_on": null,
