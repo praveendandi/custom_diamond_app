@@ -71,6 +71,10 @@ fixtures = [
                 'Delivery Note-narration',
                 'Sales Invoice-narration',
                 'Customer-transporter_name',
+                'Customer-name_of_transporter_',
+                'Customer-transporter_gstn',
+                'Sales Invoice-name_of_transporter_',
+                'Sales Invoice-transporter_gstn',
                 # 'Sales Order-transporter_id',
                 ]
         ]]
