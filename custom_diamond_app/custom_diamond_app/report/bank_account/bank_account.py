@@ -108,7 +108,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 	def get_columns(self):
 		self.columns = []
 		if self.party_naming_by == "Naming Series":
-			self.add_column(_("Bank Account Number"),fieldname="bank_account_number", fieldtype="Int")
+			self.add_column(_("Bank Account Number"),fieldname="bank_account_number", fieldtype="Link")
 			self.add_column(_("Amount"), fieldname="outstanding")
 			self.add_column(_("Account Name"),fieldname="account_name", fieldtype="Link")
 			self.add_column(_("{0} Name").format(self.party_type), fieldname="party_name", fieldtype="Data")
@@ -117,6 +117,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 			self.add_column(_("Export date"))
 			self.add_column(_("Branch Code"), fieldname="branch_code", fieldtype="Data")
 			self.add_column(_("Bank"),fieldname="bank", fieldtype="Data")
+			self.add_column(_("Branch"),fieldname="branch", fieldtype="Link")
 			# self.add_column(_("Email Id"), fieldname="email_id", fieldtype="Data")
 			# self.add_column(_("Account Name"),fieldname="account_name", fieldtype="Data")
 
