@@ -75,6 +75,7 @@ fixtures = [
                 'Customer-transporter_gstn',
                 'Sales Invoice-name_of_transporter_',
                 'Sales Invoice-transporter_gstn',
+                'Bank Account-branch',
                 # 'Sales Order-transporter_id',
                 ]
         ]]
