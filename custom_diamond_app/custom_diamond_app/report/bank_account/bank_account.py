@@ -117,7 +117,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 			self.add_column(_("Export date"))
 			self.add_column(_("Branch Code"), fieldname="branch_code", fieldtype="Data")
 			self.add_column(_("Bank"),fieldname="bank", fieldtype="Data")
-			self.add_column(_("Branch"),fieldname="branch", fieldtype="Link")
+			self.add_column(_("Branch"),fieldname="branch", fieldtype="Data")
 			# self.add_column(_("Email Id"), fieldname="email_id", fieldtype="Data")
 			# self.add_column(_("Account Name"),fieldname="account_name", fieldtype="Data")
 
