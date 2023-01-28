@@ -62,10 +62,11 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 					self.party_type, party, scrub(self.party_type) + "_name"
 				)
 			acc = frappe.db.sql(
-				"""select account_name,bank,branch_code,bank_account_no as bank_account_number,party from `tabBank Account` where party = '{0}'
+				"""select account_name,bank,branch,branch_code,bank_account_no as bank_account_number,party from `tabBank Account` where party = '{0}'
 				""".format(party),
 				as_dict=1,	
 				)
+			print(acc,"*******************")
 			if acc:
 				row.update(acc[0])
 
@@ -77,7 +78,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 				row.gl_balance = gl_balance_map.get(party)
 				row.diff = flt(row.outstanding) - flt(row.gl_balance)
 			self.data.append(row)
-
+			print(row,"rrrrrrrrrrr")
 	def get_party_total(self, args):
 		self.party_total = frappe._dict()
 		for d in self.receivables:
@@ -108,13 +109,15 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 			self.add_column(_("{0} Name").format(self.party_type), fieldname="party_name", fieldtype="Data")
 			self.add_column(label=_(self.party_type),fieldname="party",fieldtype="Link",
 						options=self.party_type,width=180,)
-			if self.filters.empty_columns:
-				for i in range(17):
+   
+			if self.filters.empty_columns and self.filters.no_of_empty_columns:
+				for i in range(int(self.filters.no_of_empty_columns)):
 					self.add_column(_(" "), fieldname=" ", fieldtype="Data")
-				
-			self.add_column(_("Branch Code"), fieldname="branch_code", fieldtype="Data")
+			
 			self.add_column(_("Bank"),fieldname="bank", fieldtype="Data")
 			self.add_column(_("Account Name"),fieldname="account_name", fieldtype="Data")
+			self.add_column(_("Branch"), fieldname="branch", fieldtype="Data")
+			self.add_column(_("Branch Code"), fieldname="branch_code", fieldtype="Data")
 
 		if self.filters.show_sales_person:
 			self.add_column(label=_("Sales Person"), fieldname="sales_person", fieldtype="Data")
