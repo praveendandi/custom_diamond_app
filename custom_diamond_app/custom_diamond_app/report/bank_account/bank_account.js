@@ -99,7 +99,14 @@ frappe.query_reports["Bank Account"] = {
 			"fieldname":"empty_columns",
 			"label": __("Empty Columns"),
 			"fieldtype": "Check",
-			"default": 0
+			"default": 0,
+		},
+		{
+			"fieldname":"no_of_empty_columns",
+			"label": __("No of Empty Columns"),
+			"fieldtype":"Data",
+			// "hidden":1
+
 		}
 	],
 
@@ -108,8 +115,23 @@ frappe.query_reports["Bank Account"] = {
 			var filters = report.get_values();
 			frappe.set_route('query-report', 'Accounts Payable', {company: filters.company});
 		});
+
+
+		document.querySelectorAll("[data-fieldname='no_of_empty_columns'] input")[0].style.display='none' 
+		let empty_column = document.querySelectorAll("[data-fieldname='empty_columns'] input")[0]
+		empty_column.addEventListener('change',(event)=>{
+			let empty_columns = frappe.query_report.get_filter_value('empty_columns');
+			if(empty_columns){
+				document.querySelectorAll("[data-fieldname='no_of_empty_columns'] input")[0].style.display='block' 
+			}else{
+				document.querySelectorAll("[data-fieldname='no_of_empty_columns'] input")[0].style.display='none' 
+			}
+		})
+
 	}
 };
 
-
 erpnext.utils.add_dimensions('Bank Account', 9);
+
+
+
