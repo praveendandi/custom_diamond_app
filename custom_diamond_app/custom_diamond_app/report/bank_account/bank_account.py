@@ -62,7 +62,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 					self.party_type, party, scrub(self.party_type) + "_name"
 				)
 			acc = frappe.db.sql(
-				"""select account_name,bank,branch,branch_code,bank_account_no as bank_account_number,party from `tabBank Account` where party = '{0}'
+				"""select account_name,bank,branch_code,bank_account_no as bank_account_number,party,branch from `tabBank Account` where party = '{0}'
 				""".format(party),
 				as_dict=1,	
 				)
@@ -78,7 +78,7 @@ class AccountsReceivableSummary(ReceivablePayableReport):
 				row.gl_balance = gl_balance_map.get(party)
 				row.diff = flt(row.outstanding) - flt(row.gl_balance)
 			self.data.append(row)
-			print(row,"rrrrrrrrrrr")
+			# print(row,"rrrrrrrrrrr")
 	def get_party_total(self, args):
 		self.party_total = frappe._dict()
 		for d in self.receivables:
