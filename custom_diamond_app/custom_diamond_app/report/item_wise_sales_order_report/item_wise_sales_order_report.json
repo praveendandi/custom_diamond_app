@@ -1,5 +1,5 @@
 {
- "add_total_row": 0,
+ "add_total_row": 1,
  "columns": [],
  "creation": "2023-01-25 11:48:41.829890",
  "disable_prepared_report": 0,
@@ -11,7 +11,7 @@
  "is_standard": "Yes",
  "json": "{}",
  "letter_head": "Diamond Modular Pvt  Ltd",
- "modified": "2023-01-25 11:56:09.744896",
+ "modified": "2023-02-13 11:00:00.446412",
  "modified_by": "Administrator",
  "module": "Custom Diamond App",
  "name": "Item wise Sales Order Report",

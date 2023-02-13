@@ -19,7 +19,7 @@ frappe.query_reports["Item wise Sales Order Report"] = {
 			"fieldtype": "Date",
 			"width": "80",
 			"reqd": 1,
-			"default": frappe.datetime.add_months(frappe.datetime.get_today(), -1),
+			"default": frappe.datetime.get_today(),
 		},
 		{
 			"fieldname":"to_date",
@@ -30,20 +30,42 @@ frappe.query_reports["Item wise Sales Order Report"] = {
 			"default": frappe.datetime.get_today()
 		},
 		{
-			"fieldname": "sales_order",
-			"label": __("Sales Order"),
+			"fieldname":"customer",
+			"label": __("Customer"),
 			"fieldtype": "MultiSelectList",
 			"width": "80",
-			"options": "Sales Order",
+			"options": "Customer",
 			"get_data": function(txt) {
-				return frappe.db.get_link_options("Sales Order", txt);
+				return frappe.db.get_link_options("Customer", txt);
 			},
-			"get_query": () =>{
-				return {
-					filters: { "docstatus": 1 }
-				}
-			}
+			// "reqd": 1,
 		},
+		{
+			"fieldname":"customer_group",
+			"label": __("Customer Group"),
+			"fieldtype": "MultiSelectList",
+			"width": "80",
+			"options": "Customer Group",
+			"get_data": function(txt) {
+				return frappe.db.get_link_options("Customer Group", txt);
+			},
+			// "reqd": 1,
+		},
+		// {
+		// 	"fieldname": "sales_order",
+		// 	"label": __("Sales Order"),
+		// 	"fieldtype": "MultiSelectList",
+		// 	"width": "80",
+		// 	"options": "Sales Order",
+		// 	"get_data": function(txt) {
+		// 		return frappe.db.get_link_options("Sales Order", txt);
+		// 	},
+		// 	"get_query": () =>{
+		// 		return {
+		// 			filters: { "docstatus": 1 }
+		// 		}
+		// 	}
+		// },
 		{
 			"fieldname": "status",
 			"label": __("Status"),
@@ -63,11 +85,35 @@ frappe.query_reports["Item wise Sales Order Report"] = {
 			}
 		},
 		{
-			"fieldname": "group_by_so",
-			"label": __("Group by Sales Order"),
-			"fieldtype": "Check",
-			"default": 0
-		}
+			"fieldname":"item_group",
+			"label": __("Item Group"),
+			"fieldtype": "MultiSelectList",
+			"width": "80",
+			"options": "Item Group",
+			"get_data": function(txt) {
+				return frappe.db.get_link_options("Item Group", txt);
+			},
+			// "reqd": 1,
+		},
+		{
+			"fieldname":"item_code",
+			"label": __("Item"),
+			"fieldtype": "Link",
+			"width": "80",
+			"options": "Item",
+			"get_data": function(txt) {
+				return frappe.db.get_link_options("Item", txt);
+			},
+			
+			// "reqd": 1,
+		},
+		
+		// {
+		// 	"fieldname": "group_by_so",
+		// 	"label": __("Group by Sales Order"),
+		// 	"fieldtype": "Check",
+		// 	"default": 0
+		// }
 
 	]
 };
