@@ -25,122 +25,75 @@ frappe.query_reports["Diamond Sales Report"] = {
 			'fieldname':"type_of_tree",
 			"label": __("Type Of Tree"),
 			"fieldtype": "Select",
-			"options":["Customer","Customer Group","Item Group","Item"],
-			"default":"Customer"
+			"options":["Customer Wise","Item Wise"],
+			"default":"Customer Wise"
 		},
 		{
 			'fieldname':"customer_parent_group",
 			"label":__("Customer Parent Group"),
-			"fieldtype":'Link',
-			'options':'Customer Group',
+			"fieldtype":'MultiSelectList',
 			'default':"",
-			// get_data:
-			// function(txt){
-			// 	return new Promise((resolve,reject)=>{
-			// 		frappe.call({
-			// 			method:"frappe.client.get_list",
-			// 			args:{
-			// 				doctype:"Customer Group",
-			// 				fields:["name","customer_group_name"],
-			// 				filters:{
-			// 					"is_group":1
-			// 				},
-			// 			},
-			// 			callback:function(r,rt){
-			// 				console.log('----------',r.message)
-			// 				if(r.message.length){
-			// 					let value = []
-			// 					r.message.forEach((res)=>{
-			// 						console.log(res,"///////////")
-			// 						let data={
-			// 							"name":res.name,
-			// 							"label":res.customer_group_name,
-			// 							"customer_group_name":res.customer_group_name
-			// 						}
-			// 						value.push(data)
-			// 					})
-			// 					console.log(value)
-			// 					resolve(value)
-			// 				}
-			// 			}
-			// 		})
-			// 	})
-			// }
+			get_data:function(txt) {
+				return frappe.db.get_link_options('Customer Group', txt,{
+					is_group :1
+				});
+			}
 		},
 		{
 			'fieldname':"customer_group",
 			"label":__("Customer Group"),
-			"fieldtype":'Link',
-			'options':'Customer Group',
+			"fieldtype":'MultiSelectList',
 			'default':"",
+			get_data:function(txt) {	
+				let base_value = frappe.query_report.get_filter_value('customer_parent_group')
+				return frappe.db.get_link_options('Customer Group', txt,{
+					parent_customer_group :base_value[0]
+				});
+			}
 		},
 		{
-			'fieldname':'Customer',
-			'label':__("Custoner"),
+			'fieldname':'customer',
+			'label':__("Customer"),
 			'fieldtype':'MultiSelectList',
 			'default':"",
-			get_data:function(txt){
-				return new Promise((resolve,reject)=>{
-				
-					 frappe.call({
-						method: "frappe.client.get_list",
-						args: {
-							doctype: "Customer Group",
-							fields:['*'],
-							filters: {
-								parent_customer_group: ["=", frappe.query_report.get_filter_value("customer_group")],
-							},
-						},
-						callback: function(r, rt) {
-							if( r.message.length) {
-								let arra= []
-								r.message.forEach((res)=>{
-									let data =frappe.db.get_link_options("Customer",txt,{
-										customer_group: res.customer_group_name
-									})
-									data.then((ev)=>{
-										ev.forEach(element => {
-											arra.push(element)
-										});
-										
-									})
-								})
-								setTimeout(() => {
-									resolve(arra)
-								}, 3000);
-							}else{
-								let data =frappe.db.get_list('Customer', { 
-									filters: {
-										 customer_group: frappe.query_report.get_filter_value("customer_group"), 
-								},
-								fields: ["name as label","name as value","customer_name as description" ], limit: 500, });
-								resolve(data)
-							}
-						}
-					});
-				})
-			},
+			get_data:function(txt) {	
+				let base_value = frappe.query_report.get_filter_value('customer_group')
+				return frappe.db.get_link_options('Customer', txt,{
+					customer_group :base_value[0]
+				});
+			}
 		},
 		{
 			"fieldname":"item_parent_Group",
 			"label":__("Item Parent Group"),
-			"fieldtype":"Link",
-			"default":"",
-			"options":"Item Group"	
+			"fieldtype":"MultiSelectList",
+			get_data:function(txt) {	
+				return frappe.db.get_link_options('Item Group', txt,{
+					is_group :1
+				});
+			}
 		},
 		{
 			"fieldname":"item_group",
 			"label":__("Item Group"),
-			"fieldtype":"Link",
-			"default":"",
-			"options":"Item Group"
+			"fieldtype":"MultiSelectList",
+			get_data:function(txt) {	
+				let base_value = frappe.query_report.get_filter_value('item_parent_Group')
+				return frappe.db.get_link_options('Item Group', txt,{
+					parent_item_group :base_value[0]
+				});
+			}
 		},
 		{
 			"fieldname":"item",
 			"label":__("Item"),
-			"fieldtype":"Link",
-			"default":"",
-			"options":"Item"
+			"fieldtype":"MultiSelectList",
+			get_data:function(txt) {	
+				let base_value = frappe.query_report.get_filter_value('item_group')
+				return frappe.db.get_link_options('Item', txt,{
+					item_group :base_value[0]
+				});
+			}
 		},
 		{
 			'fieldname':"item_category",

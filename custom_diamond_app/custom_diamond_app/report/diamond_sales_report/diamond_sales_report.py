@@ -21,37 +21,66 @@ def validate_filters(filters):
         frappe.throw(
             _("{0} and {1} are mandatory").format(frappe.bold(_("From Date")), frappe.bold(_("To Date")))
         )
+               
+    if filters.get("from_date") > filters.get("to_date"):
+        frappe.throw(
+            _("{0} not greater than To Date").format(frappe.bold(_("From Date")))
+        )
 
   
 def get_conditions(filters):
-    if filters.type_of_tree == "Customer":
-        
+    if filters.type_of_tree == "Customer Wise": 
         condition = ""
         condition += f"posting_date Between'{filters.from_date}' and '{filters.to_date}'"
-        if filters.customer_parent_group:
-            customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters.customer_parent_group},["name"])
+        if filters['customer_parent_group'] and not filters['customer_group']:
+            customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters['customer_parent_group'][0]},["name"])
             if len(customer_group)>0:
                 total_group = tuple([i["name"] for i in customer_group])
                 condition += f" and customer_group IN {total_group}"
+        if filters['customer_group']:
+            customer_group = filters["customer_group"][0]
+            condition += f" and customer_group = '{customer_group}'"
+        
+        if filters['customer']:
+            customer = filters["customer"][0]
+            condition += f" and customer = '{customer}'"
+            
         return condition
     
-    if filters.type_of_tree == "Item":
+    if filters.type_of_tree == "Item Wise":
         condition = ""
         condition += f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
-        if filters.item_parent_Group:
-        	items_groups = frappe.db.get_list("Item Group",{"parent_item_group":filters.item_parent_Group},["name"])
-        	if len(customer_group)>0:
-        		total_group = tuple([i["name"] for i in items_groups])
-        		condition += f" and soi.item_group IN {total_group}"
-        if filters.customer_parent_group:
-            customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters.customer_parent_group},["name"])
+        if filters["item_parent_Group"] and not filters['item_group']:
+            items_groups = frappe.db.get_list("Item Group",{"parent_item_group":filters["item_parent_Group"][0]},["name"])
+            if len(items_groups)>0:
+                total_group = tuple([i["name"] for i in items_groups])
+                condition += f" and soi.item_group IN {total_group}"
+                
+        if filters['item_group']:
+            item_group = filters["item_group"][0]
+            condition += f" and soi.item_group = '{item_group}'"
+            
+        if filters['item']:
+            item = filters["item"][0]
+            condition += f" and soi.item_code = '{item}'"
+            
+        if filters['customer_parent_group'] and not filters['customer_group']:
+            customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters['customer_parent_group'][0]},["name"])
             if len(customer_group)>0:
                 total_group = tuple([i["name"] for i in customer_group])
                 condition += f" and si.customer_group IN {total_group}"
+                
+        if filters['customer_group']:
+            customer_group = filters["customer_group"][0]
+            condition += f" and si.customer_group = '{customer_group}'"
+        
+        if filters['customer']:
+            customer = filters["customer"][0]
+            condition += f" and si.customer = '{customer}'"
         return condition
 
 def get_data(filters,result_condtions):
-    if filters.type_of_tree == "Customer":
+    if filters.type_of_tree == "Customer Wise":
         data = frappe.db.sql("""select customer,customer_name,customer_group,sum(grand_total) as grand_total,sum(base_net_total) as taxable_amount
                         from `tabSales Invoice` Where docstatus = 1  and is_return != 1 and {conditions} Group by customer """.format(conditions=result_condtions),as_dict =1)
         for i in data:
@@ -74,7 +103,7 @@ def get_data(filters,result_condtions):
         # print("""select customer,customer_name,customer_group,sum(grand_total) as grand_total
         #                   from `tabSales Invoice` Where {conditions} Group by customer """.format(conditions=result_condtions),"//////////")
         return data
-    if filters.type_of_tree == "Item":
+    if filters.type_of_tree == "Item Wise":
         
         data = frappe.db.sql("""select si.customer,si.customer_group,si.customer_name,soi.item_code,soi.item_group,soi.item_name,SUM(amount) as amount
                              FROM
@@ -86,7 +115,7 @@ def get_data(filters,result_condtions):
                              GROUP BY
                              si.customer,soi.item_code
                              """.format(conditions=result_condtions),as_dict=1)
-        
+
         if len(data)>0:
             for i in data:
                 parent_item_group = frappe.db.sql("""select parent_item_group from `tabItem Group` where name = '{}' """.format(i.item_group),as_dict=1)
@@ -124,7 +153,7 @@ def get_columns(filters):
             "width": 250,
         }
     ]
-    if filters.type_of_tree == 'Customer':
+    if filters.type_of_tree == 'Customer Wise':
         columns +=[
         {
             "label": _("Taxable Amount"),
@@ -158,7 +187,7 @@ def get_columns(filters):
         }
         ]
 
-    if filters.type_of_tree == 'Item':
+    if filters.type_of_tree == 'Item Wise':
         columns += [
             {
             "label": _("Item Code"),
