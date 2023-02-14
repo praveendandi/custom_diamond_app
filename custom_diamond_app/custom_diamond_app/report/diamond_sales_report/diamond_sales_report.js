@@ -25,7 +25,7 @@ frappe.query_reports["Diamond Sales Report"] = {
 			'fieldname':"type_of_tree",
 			"label": __("Type Of Tree"),
 			"fieldtype": "Select",
-			"options":["Customer Wise","Item Wise"],
+			"options":["Customer Wise","Item Wise","Item Group Wise"],
 			"default":"Customer Wise"
 		},
 		{

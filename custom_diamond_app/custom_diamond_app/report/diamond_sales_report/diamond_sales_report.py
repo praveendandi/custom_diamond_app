@@ -124,34 +124,53 @@ def get_data(filters,result_condtions):
                 i['parent_item_group'] = parent_item_group[0]['parent_item_group']
                 
         return data
-def get_columns(filters):
     
-    columns = [
-        {
-            "label": _("Party"),
-            "fieldname": "customer",
-            "fieldtype": "Link",
-            "options": "Customer",
-            "width": 250,
-        },
-        {
-            "label": _("Party Name"),
-            "fieldname": "customer_name",
-            "fieldtype": "Data",
-            "width": 250,
-        },
-        {
-            "label": _("Parent Customer Group"),
-            "fieldname": "parent_customer_group",
-            "fieldtype": "Data",
-            "width": 250,
-        },
-        {
-            "label": _("Party Group"),
-            "fieldname": "customer_group",
-            "fieldtype": "Data",
-            "width": 250,
-        }
+    if filters.type_of_tree == "Item Group Wise":
+        condition=f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
+        final_data = []
+        if filters['item_parent_Group']:
+            parent_group = filters['item_parent_Group'][0]
+            item_group_wise = frappe.db.sql("""select name from `tabItem Group` where parent_item_group = '{}' """.format(parent_group),as_dict=1)
+            for i in item_group_wise:
+                data = frappe.db.sql("""select si.customer,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                    si.docstatus = 1  and si.is_return != 1 and soi.item_group = '{name}' and {condition}
+                                    Group By soi.item_group ,si.customer """.format(name=i.name,condition=condition), as_dict=1)
+                final_data.extend(data)
+            for i in final_data:
+                i[f"{i.get('item_group')}"] = f"{float(i.get('amount'))}"
+            return final_data
+        
+    
+    
+def get_columns(filters):
+    columns = []
+    if filters.type_of_tree == 'Customer Wise' or filters.type_of_tree == 'Item Wise':
+        columns += [
+            {
+                "label": _("Party"),
+                "fieldname": "customer",
+                "fieldtype": "Link",
+                "options": "Customer",
+                "width": 250,
+            },
+            {
+                "label": _("Party Name"),
+                "fieldname": "customer_name",
+                "fieldtype": "Data",
+                "width": 250,
+            },
+            {
+                "label": _("Parent Customer Group"),
+                "fieldname": "parent_customer_group",
+                "fieldtype": "Data",
+                "width": 250,
+            },
+            {
+                "label": _("Party Group"),
+                "fieldname": "customer_group",
+                "fieldtype": "Data",
+                "width": 250,
+            }
     ]
     if filters.type_of_tree == 'Customer Wise':
         columns +=[
@@ -224,5 +243,26 @@ def get_columns(filters):
             "width": 250,
         },
         ]
+    if filters.type_of_tree == 'Item Group Wise' and filters['item_parent_Group']:
+        columns +=[
+        {
+            "label": _("Party"),
+            "fieldname": "customer",
+            "fieldtype": "Link",
+            "options": "Customer",
+            "width": 250,
+        },
+        {
+            "label": _("Party Group"),
+            "fieldname": "customer_group",
+            "fieldtype": "Data",
+            "width": 250,
+        },
+        ]
+        if filters['item_parent_Group']:
+            parent_group = filters['item_parent_Group'][0]
+            item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group},pluck='name')
+        columns += [{"label": _(each),"fieldname": each, "fieldtype": "Currency", "width": 150} for each in item_group]
+
     
     return columns
