@@ -25,7 +25,7 @@ frappe.query_reports["Diamond Sales Report"] = {
 			'fieldname':"type_of_tree",
 			"label": __("Type Of Tree"),
 			"fieldtype": "Select",
-			"options":["Customer Wise","Item Wise","Item Group Wise"],
+			"options":["Customer Wise","Item Wise","Item Group Wise","Item Group Wise Qty"],
 			"default":"Customer Wise"
 		},
 		{
@@ -96,11 +96,10 @@ frappe.query_reports["Diamond Sales Report"] = {
 			}
 		},
 		{
-			'fieldname':"item_category",
-			"label":__("Item Category"),
-			"fieldtype":'Select',
-			'options':["LED","SWITCH","WIRE"],
-			'default':" ",
+			'fieldname':"net_salses",
+			"label":__("Net Salses"),
+			"fieldtype":'Check',
+			'default':0,
 		},
 	]
 };
