@@ -3,6 +3,7 @@
 
 import frappe
 from frappe import _, _dict
+import pandas as pd
 
 def execute(filters=None):
     if not filters:
@@ -66,9 +67,12 @@ def get_conditions(filters):
             
         if filters['customer_parent_group'] and not filters['customer_group']:
             customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters['customer_parent_group'][0]},["name"])
-            if len(customer_group)>0:
+            if len(customer_group)>2:
                 total_group = tuple([i["name"] for i in customer_group])
                 condition += f" and si.customer_group IN {total_group}"
+            else:
+                total_group = customer_group[0]['name']
+                condition += f" and si.customer_group = '{total_group}'"
                 
         if filters['customer_group']:
             customer_group = filters["customer_group"][0]
@@ -77,6 +81,27 @@ def get_conditions(filters):
         if filters['customer']:
             customer = filters["customer"][0]
             condition += f" and si.customer = '{customer}'"
+        return condition
+    if filters.type_of_tree == "Item Group Wise":
+        condition = ""
+        condition += f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
+        if filters['customer_parent_group'] and not filters['customer_group']:
+            customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters['customer_parent_group'][0]},["name"])
+            if len(customer_group)>2:
+                total_group = tuple([i["name"] for i in customer_group])
+                condition += f" and si.customer_group IN {total_group}"
+            else:
+                total_group = customer_group[0]['name']
+                condition += f" and si.customer_group = '{total_group}'"
+                
+        if filters['customer_group']:
+            customer_group = filters["customer_group"][0]
+            condition += f" and si.customer_group = '{customer_group}'"
+        
+        if filters['customer']:
+            customer = filters["customer"][0]
+            condition += f" and si.customer = '{customer}'"
+            
         return condition
 
 def get_data(filters,result_condtions):
@@ -126,20 +151,29 @@ def get_data(filters,result_condtions):
         return data
     
     if filters.type_of_tree == "Item Group Wise":
-        condition=f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
-        final_data = []
         if filters['item_parent_Group']:
             parent_group = filters['item_parent_Group'][0]
             item_group_wise = frappe.db.sql("""select name from `tabItem Group` where parent_item_group = '{}' """.format(parent_group),as_dict=1)
-            for i in item_group_wise:
-                data = frappe.db.sql("""select si.customer,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
-                                    si.docstatus = 1  and si.is_return != 1 and soi.item_group = '{name}' and {condition}
-                                    Group By soi.item_group ,si.customer """.format(name=i.name,condition=condition), as_dict=1)
-                final_data.extend(data)
-            for i in final_data:
-                i[f"{i.get('item_group')}"] = f"{float(i.get('amount'))}"
-            return final_data
-        
+            name = tuple([i["name"] for i in item_group_wise])
+            data = frappe.db.sql("""select si.customer,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                si.docstatus = 1  and si.is_return != 1 and soi.item_group IN {name} and {condition}
+                                Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name=name,condition=result_condtions), as_dict=1)
+            if len(data) >0:
+                data_1 = []
+                for i in data:
+                    value = {}
+                    value['customer'] = i.get('customer')
+                    value['customer_group'] = i.get('customer_group')
+                    # item_group =  i.get('item_group')
+                    # amount = i.get("amount")
+                    value[i.get('item_group')] = i.get("amount")
+                    data_1.append(value)
+                    
+                data_convert = pd.DataFrame.from_records(data_1,)
+                final_data = data_convert.groupby(['customer',"customer_group"],as_index=False).sum()
+                convert_data = final_data.to_dict('records')
+                return convert_data
+            
     
     
 def get_columns(filters):
@@ -151,25 +185,25 @@ def get_columns(filters):
                 "fieldname": "customer",
                 "fieldtype": "Link",
                 "options": "Customer",
-                "width": 250,
+                "width": 150,
             },
             {
                 "label": _("Party Name"),
                 "fieldname": "customer_name",
                 "fieldtype": "Data",
-                "width": 250,
+                "width": 150,
             },
             {
                 "label": _("Parent Customer Group"),
                 "fieldname": "parent_customer_group",
                 "fieldtype": "Data",
-                "width": 250,
+                "width": 150,
             },
             {
                 "label": _("Party Group"),
                 "fieldname": "customer_group",
                 "fieldtype": "Data",
-                "width": 250,
+                "width": 150,
             }
     ]
     if filters.type_of_tree == 'Customer Wise':
@@ -178,31 +212,31 @@ def get_columns(filters):
             "label": _("Taxable Amount"),
             "fieldname": "taxable_amount",
             "fieldtype": "Currency",
-            "width": 250,
+            "width": 150,
         },
         {
             "label": _("Taxable Return Amount"),
             "fieldname": "taxable_return_amount",
             "fieldtype": "Currency",
-            "width": 250,
+            "width": 150,
         },
         {
             "label": _("Total Bills Amount"),
             "fieldname": "grand_total",
             "fieldtype": "Currency",
-            "width": 200,
+            "width": 150,
         },
         {
             "label": _("Total Returns Amount"),
             "fieldname": "return_amount",
             "fieldtype": "Currency",
-            "width": 200,
+            "width": 150,
         },
         {
             "label": _("Total Amount"),
             "fieldname": "total_amount",
             "fieldtype": "Currency",
-            "width": 200,
+            "width": 150,
         }
         ]
 
@@ -213,34 +247,34 @@ def get_columns(filters):
             "fieldname": "item_code",
             "fieldtype": "Link",
             "options": "Item",
-            "width": 250,
+            "width": 150,
         },
        {
             "label": _("Item Name"),
             "fieldname": "item_name",
             "fieldtype": "Data",
             "options": "Item Group",
-            "width": 250,
+            "width": 150,
         },
         {
             "label": _("Item Group"),
             "fieldname": "item_group",
             "fieldtype": "Link",
             "options": "Item Group",
-            "width": 250,
+            "width": 150,
         },
         {
             "label": _("Item Parent Group"),
             "fieldname": "parent_item_group",
             "fieldtype": "Link",
             "options": "Item Group",
-            "width": 250,
+            "width": 150,
         },
         {
             "label": _("amount"),
             "fieldname": "amount",
             "fieldtype": "Currency",
-            "width": 250,
+            "width": 150,
         },
         ]
     if filters.type_of_tree == 'Item Group Wise' and filters['item_parent_Group']:
@@ -250,13 +284,13 @@ def get_columns(filters):
             "fieldname": "customer",
             "fieldtype": "Link",
             "options": "Customer",
-            "width": 250,
+            "width": 150,
         },
         {
             "label": _("Party Group"),
             "fieldname": "customer_group",
             "fieldtype": "Data",
-            "width": 250,
+            "width": 150,
         },
         ]
         if filters['item_parent_Group']:
