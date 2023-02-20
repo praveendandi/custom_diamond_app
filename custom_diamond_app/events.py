@@ -276,3 +276,16 @@ def stock_entry_after_submit_purchase_recipt(doc,method=None):
             else:
                 frappe.throw("BOM Not Exists for Item {}".format(item_codes))
         # doc_insert.submit()
+
+def bom_item_uom(doc,method=None):
+    try:
+        bom_data = frappe.db.get_list("BOM Item",filters={"parent":doc.name},fields=['item_code','uom'])
+        for i in bom_data:
+            item_data = frappe.db.get_list("UOM Conversion Detail",filters={"parent":i.item_code},fields=['uom'])
+            print(i,"*********",item_data)
+            if next((j for j in item_data if j["uom"] == i.uom),False):
+                pass
+            else:
+                frappe.throw(_("Please select proper UOM of {0}").format(i.item_code))
+    except frappe.MandatoryError as e:
+        print(e)

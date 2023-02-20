@@ -141,7 +141,9 @@ doc_events = {
    "Purchase Receipt": {
         "before_submit":"custom_diamond_app.events.stock_entry_after_submit_purchase_recipt"
     },
-
+    "BOM":{
+        "on_update":"custom_diamond_app.events.bom_item_uom"
+    }
 }	
 
 # Scheduled Tasks
