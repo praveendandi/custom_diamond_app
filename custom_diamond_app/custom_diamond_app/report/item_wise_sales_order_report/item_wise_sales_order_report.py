@@ -1,6 +1,8 @@
 # Copyright (c) 2023, Ganu Reddy and contributors
 # For license information, please see license.txt
-import copy
+
+# import frappe
+# import copy
 from collections import OrderedDict
 
 import frappe
@@ -41,6 +43,7 @@ def validate_filters(filters):
 
 
 def get_conditions(filters):
+	# print(filters,'--------------')
 	conditions = ""
 
 	conditions += f" and so.transaction_date between'{filters.from_date}' and '{filters.to_date}'"
@@ -48,8 +51,8 @@ def get_conditions(filters):
 	if filters.get("company"):
 		conditions += " and so.company = %(company)s"
 
-	if filters.get("sales_order"):
-		conditions += " and so.name in %(sales_order)s"
+	# if filters.get("sales_order"):
+	# 	conditions += " and so.name in %(sales_order)s"
 	
 	if filters.get("customer"):
 		conditions += " and so.customer in %(customer)s"
@@ -57,24 +60,35 @@ def get_conditions(filters):
 	if filters.get("customer_group"):
 		conditions += " and so.customer_group in %(customer_group)s"
 
+	if filters.get("parent_customer_group") and not filters.get("customer_group"):
+		parent_group = frappe.db.get_list("Customer Group",{'parent_customer_group':filters.get("parent_customer_group")[0]},pluck ='name')
+		data = tuple(parent_group)
+		conditions +=f" and so.customer_group IN {data}"
+		# conditions +=f" and cg.parent_customer_group in %(parent_customer_group)s"
+
+
+	if filters.get("parent_item_group") and not filters.get("item_group"):
+		parent_group = frappe.db.get_list("Item Group",{'parent_item_group':filters.get("parent_item_group")[0]},pluck ='name')
+		data = tuple(parent_group)
+		conditions +=f" and soi.item_group IN {data}"
+
 	if filters.get("item_group"):
 		conditions += " and soi.item_group in %(item_group)s"
 
-	if filters.item_code:
-		conditions += f" and soi.item_code = '{filters.item_code}'"
+	if filters.get("item_code"):
+		conditions += " and soi.item_code in %(item_code)s"
 
-	if filters.get("status"):
-		conditions += " and so.status in %(status)s"
+	# if filters.get("status"):
+	# 	conditions += " and so.status in %(status)s"
 
 	return conditions
 
 
 def get_data(conditions, filters):
-	# nosemgrep
 	data = frappe.db.sql(
 		"""
 		SELECT
-			so.name as sales_order,so.status, so.customer,so.customer_group, soi.item_code,soi.item_group,
+			so.name as sales_order,so.status, so.customer,so.customer_group,soi.item_code,soi.item_group,
 			SUM(soi.qty) AS qty, SUM(soi.delivered_qty) AS delivered_qty,(SUM(soi.qty) - SUM(soi.delivered_qty)) AS pending_qty,
 			
 			so.company, soi.name,
@@ -97,6 +111,14 @@ def get_data(conditions, filters):
 		as_dict=1,
 	)
 
+	for i in data:
+		parent_customer_group = frappe.db.get_list("Customer Group",{"name":i.customer_group},["parent_customer_group"])
+		if parent_customer_group:
+			i["parent_customer_group"] = parent_customer_group[0]['parent_customer_group']
+			
+		parent_item_group = frappe.db.get_list("Item Group",{"name":i.item_group},["parent_item_group"])
+		if parent_item_group:
+			i["parent_item_group"] = parent_item_group[0]['parent_item_group']
 	# print(data,'//////////////////////')
 	return data
 	
@@ -212,15 +234,7 @@ def prepare_chart_data(pending, completed):
 
 def get_columns(filters):
 	columns = [
-		# {"label": _("Date"), "fieldname": "date", "fieldtype": "Date", "width": 90},
-		# {
-		# 	"label": _("Sales Order"),
-		# 	"fieldname": "sales_order",
-		# 	"fieldtype": "Link",
-		# 	"options": "Sales Order",
-		# 	"width": 160,
-		# },
-		# {"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 130},
+
 		{
 			"label": _("Customer"),
 			"fieldname": "customer",
@@ -234,6 +248,14 @@ def get_columns(filters):
 			"fieldtype": "Link",
 			"options": "Customer Group",
 			"width": 130,
+		},
+		{
+			"label": _("Parent Customer Group"),
+			"fieldname": "parent_customer_group",
+			"fieldtype": "Link",
+			"options": "Customer Group",
+			"width": 130,
+			"is_group":1
 		},
 	]
 
@@ -257,6 +279,15 @@ def get_columns(filters):
 				"fieldtype": "Link",
 				"options": "Item Group",
 				"width": 100,
+				
+			},
+			{
+				"label": _("Parent Item Group"),
+				"fieldname": "parent_item_group",
+				"fieldtype": "Link",
+				"options": "Item Group",
+				"width": 100,
+				"is_group":1
 			},
 			{
 				"label": _("Ordered Qty"),
@@ -280,14 +311,7 @@ def get_columns(filters):
 				"width": 120,
 				"convertible": "qty",
 			},
-			# {
-			# 	"label": _("Amount"),
-			# 	"fieldname": "amount",
-			# 	"fieldtype": "Currency",
-			# 	"width": 110,
-			# 	"options": "Company:company:default_currency",
-			# 	"convertible": "rate",
-			# }
+
 
 		]
 	)

@@ -195,6 +195,7 @@ def get_data(filters,result_condtions):
                     value['customer'] = i.get('customer')
                     value['customer_group'] = i.get('customer_group')
                     value[i.get('item_group')] = i.get("amount")
+                    value['total'] = i.get("amount")
                     data_1.append(value)
                     
                 data_convert = pd.DataFrame.from_records(data_1,)
@@ -212,11 +213,13 @@ def get_data(filters,result_condtions):
                                 Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name=name,condition=result_condtions), as_dict=1)
             if len(data) >0:
                 data_1 = []
+               
                 for i in data:
                     value = {}
                     value['customer'] = i.get('customer')
                     value['customer_group'] = i.get('customer_group')
                     value[i.get('item_group')] = i.get("qty")
+                    value['total_qty'] = i.get("qty")
                     data_1.append(value)
                     
                 data_convert = pd.DataFrame.from_records(data_1,)
@@ -353,6 +356,7 @@ def get_columns(filters):
             parent_group = filters['item_parent_Group'][0]
             item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group},pluck='name')
         columns += [{"label": _(each),"fieldname": each, "fieldtype": "Currency", "width": 150} for each in item_group]
+        columns +=[{"label":_("Total"),"fieldname":"total","fieldtype":"Currency","width":150}]
         
     if filters.type_of_tree == 'Item Group Wise Qty' and filters['item_parent_Group']:
         columns +=[
@@ -374,6 +378,7 @@ def get_columns(filters):
             parent_group = filters['item_parent_Group'][0]
             item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group},pluck='name')
         columns += [{"label": _(each),"fieldname": each, "fieldtype": "Data", "width": 150} for each in item_group]
+        columns +=[{"label":_("Total Qty"),"fieldname":"total_qty","fieldtype":"Data","width":150}]
 
     
     return columns
