@@ -153,7 +153,11 @@ doc_events = {
     },
     'Journal Entry':{
         'on_update':'custom_diamond_app.events.journal_entry'
-    }
+    },
+    "Sales Invoice": {
+		"on_submit":"custom_diamond_app.events.create_journal_entry_through_si_return",
+		"on_update":"custom_diamond_app.events.update_addition_amount"
+	}
    
 }	
 
