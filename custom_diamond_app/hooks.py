@@ -146,7 +146,11 @@ doc_events = {
     },
     'Payment Entry':{
         'on_update':'custom_diamond_app.events.posting_date'
+    },
+    'Journal Entry':{
+        'on_update':'custom_diamond_app.events.journal_entry'
     }
+   
 }	
 
 # Scheduled Tasks

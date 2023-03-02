@@ -293,4 +293,8 @@ def bom_item_uom(doc,method=None):
 def posting_date(doc,method=None):
     data=frappe.db.get_value("Payment Entry",doc.name,'reference_date')  
     data1=frappe.db.set_value("Payment Entry",doc.name,'posting_date',data)
+    
+def journal_entry(doc,method=None):
+    value= frappe.db.get_value("Journal Entry",doc.name,'cheque_date')  
+    value_update=frappe.db.set_value("Journal Entry",doc.name,'posting_date',value)   
         
