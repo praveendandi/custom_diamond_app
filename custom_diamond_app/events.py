@@ -347,7 +347,7 @@ def get_unpaid_sales_invoices(data):
         data_doc = json.loads(data)
         if data_doc['get_unpaid_and_partly_paid_invoices']:
             get_unpaid_and_partly_invoice = frappe.db.sql("""Select name,customer,base_total,outstanding_amount from `tabSales Invoice` 
-                                        Where customer ='{customer}' and status IN ('Unpaid','Partly Paid')""".format(customer=data_doc["customer"]),as_dict=True)
+                                        Where customer ='{customer}' and status IN ('Overdue','Unpaid','Partly Paid')""".format(customer=data_doc["customer"]),as_dict=True)
         
         if data_doc['get_paid_invoices']:
             
