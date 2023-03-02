@@ -302,9 +302,9 @@ def journal_entry(doc,method=None):
 
 def create_journal_entry_through_si_return(data,method=None):
     try:
-        if data.is_return:
+        if data.is_return and method == 'on_submit':
             total = 0.0
-            data_doc = {"doctype":"Journal Entry","voucher_type":"Credit Note","posting_date":data.posting_date,}
+            data_doc = {"doctype":"Journal Entry","cheque_no":data.name,"cheque_date":data.posting_date,"voucher_type":"Credit Note","posting_date":data.posting_date,}
             accounts = []
             for i in range(len(data.sales_invoice)):
                 accounts.append(
@@ -322,20 +322,23 @@ def create_journal_entry_through_si_return(data,method=None):
                  
             accounts.append({"doctype":"Journal Entry Account", "account":'Sales - DMPL',"debit_in_account_currency": total})
             data_doc["accounts"] = accounts
-            # print(data_doc,"/......")
+            print(data_doc,"/......")
             doc = frappe.get_doc(data_doc)
             doc.docstatus = 1
             doc.insert()
             frappe.db.commit()
+        else:
+            if method == 'on_cancel':
+                if frappe.db.exists('Journal Entry',{"cheque_no":data.name}):
+                    journal_name = frappe.db.get_list("Journal Entry",{"cheque_no":data.name},["name"])
+                    name = journal_name[0]['name']
+                    doc = frappe.get_doc("Journal Entry", name)
+                    doc.cancel()
+                
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
 
-    
-    
-    
-    
-   
 @frappe.whitelist()
 def get_unpaid_sales_invoices(data):
     # print("Test________________",data)
@@ -344,18 +347,15 @@ def get_unpaid_sales_invoices(data):
         if data_doc['get_unpaid_and_partly_paid_invoices']:
             get_unpaid_and_partly_invoice = frappe.db.sql("""Select name,customer,base_total,outstanding_amount from `tabSales Invoice` 
                                         Where customer ='{customer}' and status IN ('Unpaid','Partly Paid')""".format(customer=data_doc["customer"]),as_dict=True)
-            # print(get_unpaid_and_partly_invoice,"///////////////////..................")
         
         if data_doc['get_paid_invoices']:
             
             get_paid_invoice = frappe.db.sql("""Select name,customer,base_total,outstanding_amount from `tabSales Invoice` 
                                         Where customer ='{customer}' and status ='Paid' """.format(customer=data_doc["customer"]),as_dict=True)
-            print(get_paid_invoice,"/.................................")
         
         if len(get_unpaid_and_partly_invoice):
             return_outstanding_amount = 0.0
             return_outstanding_amount += abs(data_doc['outstanding_amount'])
-            print(return_outstanding_amount,"////////////////")
             for i in get_unpaid_and_partly_invoice:
                 if i['outstanding_amount'] <= return_outstanding_amount:
                     i["allocated_amount"] = i['outstanding_amount']
@@ -371,8 +371,7 @@ def get_unpaid_sales_invoices(data):
         if len(get_paid_invoice):
             return_outstanding_amount = 0.0
             return_outstanding_amount += abs(data_doc['outstanding_amount'])
-            print(return_outstanding_amount,"////////////////")
-            for i in get_unpaid_and_partly_invoice:
+            for i in get_paid_invoice:
                 if i['outstanding_amount'] <= return_outstanding_amount:
                     i["allocated_amount"] = i['outstanding_amount']
                     return_outstanding_amount -= i['outstanding_amount']
@@ -380,7 +379,7 @@ def get_unpaid_sales_invoices(data):
                     i['allocated_amount'] = return_outstanding_amount
                     return_outstanding_amount = 0.0
             
-            return get_unpaid_and_partly_invoice
+            return get_paid_invoice
         else:
             pass
             
@@ -390,7 +389,6 @@ def get_unpaid_sales_invoices(data):
         
     
 def update_addition_amount(data,method=None):
-    # print(data,"////////////////////////////////////") 
     total_amount = 0.0
     if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1:
         if len(data.sales_invoice) :
@@ -398,13 +396,8 @@ def update_addition_amount(data,method=None):
                 total_amount +=data.sales_invoice[i].allocated_amount
                 print(data.sales_invoice[i].allocated_amount)
             
-            # print(-total_amount,"///////////////////")            
             frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount})
             frappe.db.commit()
-            # frappe.reload_doctype("Sales Invoice")
     else:
         frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount})
         frappe.db.commit()
-        # frappe.reload_doctype("Sales Invoice")
-        
-        
