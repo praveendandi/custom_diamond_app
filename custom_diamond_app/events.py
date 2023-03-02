@@ -289,3 +289,8 @@ def bom_item_uom(doc,method=None):
                 frappe.throw(_("Please select proper UOM of {0}").format(i.item_code))
     except frappe.MandatoryError as e:
         print(e)
+       
+def posting_date(doc,method=None):
+    data=frappe.db.get_value("Payment Entry",doc.name,'reference_date')  
+    data1=frappe.db.set_value("Payment Entry",doc.name,'posting_date',data)
+        
