@@ -31,7 +31,7 @@ from erpnext.stock.doctype.item.item import get_item_defaults
 from erpnext.stock.get_item_details import get_default_bom
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
 import datetime
-import sys
+#import sys
 
 
 @frappe.whitelist()
@@ -336,8 +336,9 @@ def create_journal_entry_through_si_return(data,method=None):
                     doc.cancel()
                 
     except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
+        print(str(e))
+        # exc_type, exc_obj, exc_tb = sys.exc_info()
+        # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
 
 @frappe.whitelist()
 def get_unpaid_sales_invoices(data):
@@ -384,8 +385,9 @@ def get_unpaid_sales_invoices(data):
             pass
             
     except Exception as e:
-        exc_type, exc_obj, exc_tb = sys.exc_info()
-        frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "get_unpaid_sales_invoices")
+        print(str(e))
+        # exc_type, exc_obj, exc_tb = sys.exc_info()
+        # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "get_unpaid_sales_invoices")
         
     
 def update_addition_amount(data,method=None):
