@@ -300,43 +300,43 @@ def journal_entry(doc,method=None):
     value_update=frappe.db.set_value("Journal Entry",doc.name,'posting_date',value)   
         
 
-def create_journal_entry_through_si_return(data,method=None):
-    try:
-        if data.is_return and method == 'on_submit':
-            total = 0.0
-            data_doc = {"doctype":"Journal Entry","cheque_no":data.name,"cheque_date":data.posting_date,"voucher_type":"Credit Note","posting_date":data.posting_date,}
-            accounts = []
-            for i in range(len(data.sales_invoice)):
-                accounts.append(
-                    {
-                        "doctype":"Journal Entry Account",
-                        "account":"Debtors - DMPL",
-                        "party_type":"Customer",
-                        "party":data.customer,
-                        "reference_type":"Sales Invoice",
-                        "reference_name":data.sales_invoice[i].reference_no,
-                        "credit_in_account_currency":data.sales_invoice[i].allocated_amount
-                    })
+# def create_journal_entry_through_si_return(data,method=None):
+#     try:
+#         if data.is_return and method == 'on_submit':
+#             total = 0.0
+#             data_doc = {"doctype":"Journal Entry","cheque_no":data.name,"cheque_date":data.posting_date,"voucher_type":"Credit Note","posting_date":data.posting_date,}
+#             accounts = []
+#             for i in range(len(data.sales_invoice)):
+#                 accounts.append(
+#                     {
+#                         "doctype":"Journal Entry Account",
+#                         "account":"Debtors - DMPL",
+#                         "party_type":"Customer",
+#                         "party":data.customer,
+#                         "reference_type":"Sales Invoice",
+#                         "reference_name":data.sales_invoice[i].reference_no,
+#                         "credit_in_account_currency":data.sales_invoice[i].allocated_amount
+#                     })
                                 
-                total += data.sales_invoice[i].allocated_amount
+#                 total += data.sales_invoice[i].allocated_amount
                  
-            accounts.append({"doctype":"Journal Entry Account", "account":'Sales - DMPL',"debit_in_account_currency": total})
-            data_doc["accounts"] = accounts
-            print(data_doc,"/......")
-            doc = frappe.get_doc(data_doc)
-            doc.docstatus = 1
-            doc.insert()
-            frappe.db.commit()
-        else:
-            if method == 'on_cancel':
-                if frappe.db.exists('Journal Entry',{"cheque_no":data.name}):
-                    journal_name = frappe.db.get_list("Journal Entry",{"cheque_no":data.name},["name"])
-                    name = journal_name[0]['name']
-                    doc = frappe.get_doc("Journal Entry", name)
-                    doc.cancel()
+#             accounts.append({"doctype":"Journal Entry Account", "account":'Sales - DMPL',"debit_in_account_currency": total})
+#             data_doc["accounts"] = accounts
+#             print(data_doc,"/......")
+#             doc = frappe.get_doc(data_doc)
+#             doc.docstatus = 1
+#             doc.insert()
+#             frappe.db.commit()
+#         else:
+#             if method == 'on_cancel':
+#                 if frappe.db.exists('Journal Entry',{"cheque_no":data.name}):
+#                     journal_name = frappe.db.get_list("Journal Entry",{"cheque_no":data.name},["name"])
+#                     name = journal_name[0]['name']
+#                     doc = frappe.get_doc("Journal Entry", name)
+#                     doc.cancel()
                 
-    except Exception as e:
-        print(str(e))
+#     except Exception as e:
+#         print(str(e))
         # exc_type, exc_obj, exc_tb = sys.exc_info()
         # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
 
@@ -403,3 +403,41 @@ def update_addition_amount(data,method=None):
     else:
         frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount})
         frappe.db.commit()
+
+
+def create_GL_entry_through_si_return(data,method=None):
+    try:
+        if data.get_unpaid_and_partly_paid_invoices==1:
+            print("//////////////////////////////")
+            # Fetch the GL Entry DocType
+            for i in range(len(data.sales_invoice)):
+                print("iiiiiiiiiiiiiiiiiiiii",i,data.sales_invoice[i].reference_no)
+                gl_entry = frappe.get_doc({
+                    "doctype": "GL Entry",
+                    "posting_date": data.posting_date,
+                    "party_type":"Customer",
+                    "party":data.customer,
+                    "account": "Debtors - DMPL",
+                    "debit": 0.00,
+                    "credit_in_account_currency":0.00,
+                    "credit": data.sales_invoice[i].allocated_amount,
+                    "credit_in_account_currency":data.sales_invoice[i].allocated_amount,
+                    "against":"Sales - DMPL",
+                    "against_voucher_type":"Sales Invoice",
+                    "against_voucher":data.sales_invoice[i].reference_no,
+                    "voucher_type":"Sales Invoice",
+                    "voucher_no": data.name,
+                    "remarks":data.name,
+                    "is_opening":"No",
+                    "is_advance":"No",
+                    # "fiscal_year":"2022-2023",
+                    # "company":"DIAMOND MODULAR PRIVATE LIMITED",
+                })
+                
+                # Save the GL Entry
+                gl_entry.docstatus =1
+                gl_entry.insert()
+                print("///.................................")
+                    
+    except Exception as e:
+        print(str(e))
