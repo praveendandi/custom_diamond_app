@@ -394,7 +394,7 @@ def get_unpaid_sales_invoices(data):
 def update_addition_amount(data,method=None):
     print("..............................")
     total_amount = 0.0
-    if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1 :
+    if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1 and method != 'on_cancel':
         if len(data.sales_invoice) :
             for i in range(len(data.sales_invoice)):
                 total_amount +=data.sales_invoice[i].allocated_amount
