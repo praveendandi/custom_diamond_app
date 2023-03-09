@@ -443,7 +443,7 @@ def create_GL_entry_through_si_return(data,method=None):
                 })
                 
                 # Save the GL Entry
-                gl_entry.docstatus =1
+                # gl_entry.docstatus =1
                 gl_entry.insert()
                
             
