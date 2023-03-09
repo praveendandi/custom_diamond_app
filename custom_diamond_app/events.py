@@ -462,19 +462,19 @@ def create_GL_entry_through_si_return(data,method=None):
                         frappe.db.set_value("Sales Invoice",data.sales_invoice[j].reference_no,{"status":"Partly Paid",'outstanding_amount':sub_outstanding_amount})
                         frappe.db.commit()
             
-        # if data.get_unpaid_and_partly_paid_invoices==1 and  method == 'on_cancel':
-        #     for k in range(len(data.sales_invoice)):
-        #         print("//////////////////,,,,,,,,,,,,,,,,,,,,,,,,,,")
-        #         if frappe.db.exists('Sales Invoice',{"name":data.sales_invoice[k].reference_no}) and method == 'on_cancel':
-        #             get_data = frappe.db.get_list("Sales Invoice",{"name":data.sales_invoice[k].reference_no},['name','outstanding_amount','status'])
-        #             print(get_data,"/////////////////////")
-        #             if int(get_data[0]['outstanding_amount']) == 0 and get_data[0]['status'] == 'Paid':
-        #                 frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':data.sales_invoice[k].allocated_amount})
-        #                 frappe.db.commit()
-        #             else:
-        #                 sub_outstanding_amount = get_data[0]['outstanding_amount'] + data.sales_invoice[k].allocated_amount
-        #                 frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':sub_outstanding_amount})
-        #                 frappe.db.commit()
+        if data.get_unpaid_and_partly_paid_invoices==1 and  method == 'on_cancel':
+            for k in range(len(data.sales_invoice)):
+                print("//////////////////,,,,,,,,,,,,,,,,,,,,,,,,,,")
+                if frappe.db.exists('Sales Invoice',{"name":data.sales_invoice[k].reference_no}) and method == 'on_cancel':
+                    get_data = frappe.db.get_list("Sales Invoice",{"name":data.sales_invoice[k].reference_no},['name','outstanding_amount','status'])
+                    print(get_data,"/////////////////////")
+                    if int(get_data[0]['outstanding_amount']) == 0 and get_data[0]['status'] == 'Paid':
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':data.sales_invoice[k].allocated_amount})
+                        frappe.db.commit()
+                    else:
+                        sub_outstanding_amount = get_data[0]['outstanding_amount'] + data.sales_invoice[k].allocated_amount
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':sub_outstanding_amount})
+                        frappe.db.commit()
     
                     
     except Exception as e:
