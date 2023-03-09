@@ -400,11 +400,11 @@ def update_addition_amount(data,method=None):
                 total_amount +=data.sales_invoice[i].allocated_amount
                 print(data.sales_invoice[i].allocated_amount)
             
-            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount})
+            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
             frappe.db.commit()
     else:
         if data.is_return ==1 and method != 'on_cancel':
-            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount})
+            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
             frappe.db.commit()
         
         
@@ -454,12 +454,12 @@ def create_GL_entry_through_si_return(data,method=None):
                     
                     if int(get_data[0]['outstanding_amount']) == int(data.sales_invoice[j].allocated_amount) and get_data[0]['status'] == 'Unpaid':
 
-                        frappe.db.set_value("Sales Invoice",data.sales_invoice[j].reference_no,{"status":"Paid",'outstanding_amount':0.0})
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[j].reference_no,{"status":"Paid",'outstanding_amount':0.0},update_modified=False)
                         frappe.db.commit()
     
                     else:
                         sub_outstanding_amount = get_data[0]['outstanding_amount'] - data.sales_invoice[j].allocated_amount
-                        frappe.db.set_value("Sales Invoice",data.sales_invoice[j].reference_no,{"status":"Partly Paid",'outstanding_amount':sub_outstanding_amount})
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[j].reference_no,{"status":"Partly Paid",'outstanding_amount':sub_outstanding_amount},update_modified=False)
                         frappe.db.commit()
             
         if data.get_unpaid_and_partly_paid_invoices==1 and  method == 'on_cancel':
@@ -469,11 +469,11 @@ def create_GL_entry_through_si_return(data,method=None):
                     get_data = frappe.db.get_list("Sales Invoice",{"name":data.sales_invoice[k].reference_no},['name','outstanding_amount','status'])
                     print(get_data,"/////////////////////")
                     if int(get_data[0]['outstanding_amount']) == 0 and get_data[0]['status'] == 'Paid':
-                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':data.sales_invoice[k].allocated_amount})
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':data.sales_invoice[k].allocated_amount},update_modified=False)
                         frappe.db.commit()
                     else:
                         sub_outstanding_amount = get_data[0]['outstanding_amount'] + data.sales_invoice[k].allocated_amount
-                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':sub_outstanding_amount})
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':sub_outstanding_amount},update_modified=False)
                         frappe.db.commit()
     
                     
