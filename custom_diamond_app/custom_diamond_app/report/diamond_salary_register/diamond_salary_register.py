@@ -138,7 +138,7 @@ def get_columns(salary_slips):
         + [
             _("Loan Repayment") + ":Currency:120",
             _("Total Deduction") + ":Currency:120",
-            _("Net Pay") + ":Currency:120",
+            _("Net Pay") + ":Int:120",
         ]
     )
 
