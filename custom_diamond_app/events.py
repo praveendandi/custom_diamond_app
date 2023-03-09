@@ -427,7 +427,7 @@ def create_GL_entry_through_si_return(data,method=None):
                     "party":data.customer,
                     "account": "Debtors - DMPL",
                     "debit": 0.00,
-                    "credit_in_account_currency":0.00,
+                    "debit_in_account_currency":0.00,
                     "credit": data.sales_invoice[i].allocated_amount,
                     "credit_in_account_currency":data.sales_invoice[i].allocated_amount,
                     "against":"Sales - DMPL",
