@@ -158,7 +158,11 @@ doc_events = {
 		"on_submit":"custom_diamond_app.events.create_GL_entry_through_si_return",
 		"on_update":"custom_diamond_app.events.update_addition_amount",
 		"on_cancel":"custom_diamond_app.events.create_GL_entry_through_si_return"
-	}
+	},
+ 	"Salary Slip":{
+		"on_submit":"custom_diamond_app.events.employee_expense_claim",
+  		"on_cancel":"custom_diamond_app.events.employee_expense_claim"
+	},
    
 }	
 

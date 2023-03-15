@@ -481,3 +481,50 @@ def create_GL_entry_through_si_return(data,method=None):
         print(str(e))
         # exc_type, exc_obj, exc_tb = sys.exc_info()
         # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
+        
+        
+def employee_expense_claim(data,method = None):
+    try:
+        if method == 'on_submit':
+            approval_status = 'Approved'
+            employee = data.employee
+            expense_approver = frappe.db.get_list('Employee',{'name':employee},['expense_approver'])
+            expense_date = data.end_date
+            expense_amount = data.net_pay
+            payable_account = 'Employee  Expense - DMPL'
+            
+            create_doc = frappe.get_doc({
+                'doctype':'Expense Claim',
+                'employee':employee,
+                'expense_approver':expense_approver[0]['expense_approver'],
+                'approval_status': approval_status,
+                'expenses':[
+                    {
+                        'doctype':'Expense Claim Detail',
+                        'expense_date': expense_date,
+                        'expense_type': 'Others',
+                        'description': 'Salary',
+                        'amount':expense_amount,
+                        'sanctioned_amount':expense_amount,
+                        'cost_center': 'Main - DMPL'
+                        
+                    }
+                ],
+                'payable_account': payable_account,
+                'grand_total': expense_amount,
+                'remark':data.name
+            })
+        
+            create_doc.docstatus = 1
+            create_doc.insert()
+            frappe.db.commit()
+            
+        else: 
+            if method  == 'on_cancel':
+                if frappe.db.exists('Expense Claim',{"remark":data.name}):
+                    expense_name = frappe.db.get_list("Expense Claim",{"remark":data.name},["name"])
+                    name = expense_name[0]['name']
+                    doc = frappe.get_doc("Expense Claim", name)
+                    doc.cancel()
+    except Exception as e:
+        print(str(e))
