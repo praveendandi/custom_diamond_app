@@ -67,7 +67,7 @@ frappe.query_reports["Diamond Sales Report"] = {
 			"fieldname":"item_parent_Group",
 			"label":__("Item Parent Group"),
 			"fieldtype":"MultiSelectList",
-			"depends_on": doc.type_of_tree=='Item Group Wise',
+			// "depends_on": doc.type_of_tree=='Item Group Wise',
 			get_data:function(txt) {	
 				return frappe.db.get_link_options('Item Group', txt,{
 					is_group :1
