@@ -530,3 +530,23 @@ def employee_expense_claim(data,method = None):
                     doc.cancel()
     except Exception as e:
         print(str(e))
+        
+
+def bank_transaction(data,method=None):
+    print(data.as_dict())
+    try:
+        if method == 'on_submit':
+            if frappe.db.exists("Bank Transaction",
+                                {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no}):
+                data_get = frappe.get_list("Bank Transaction",
+                                           {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no},['name'])
+                child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': 'Payment Entry','payment_entry': data.name,'allocated_amount':data.paid_amount,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
+                child_data.save()
+                child_data.reload()
+                frappe.db.set_value("Bank Transaction",data_get[0]['name'],{"status":"Reconciled",'allocated_amount':data.paid_amount,'unallocated_amount':0.0},update_modified=False)
+                frappe.db.commit()
+                
+            else:
+                pass
+    except Exception as e:
+        print(str(e))
