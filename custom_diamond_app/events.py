@@ -532,21 +532,70 @@ def employee_expense_claim(data,method = None):
         print(str(e))
         
 
+# def bank_transaction(data,method=None):
+#     print(data.as_dict())
+#     try:
+#         if method == 'on_submit':
+#             if frappe.db.exists("Bank Transaction",
+#                                 {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no}):
+#                 data_get = frappe.get_list("Bank Transaction",
+#                                            {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no},['name'])
+#                 child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': 'Payment Entry','payment_entry': data.name,'allocated_amount':data.paid_amount,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
+#                 child_data.save()
+#                 child_data.reload()
+#                 frappe.db.set_value("Bank Transaction",data_get[0]['name'],{"status":"Reconciled",'allocated_amount':data.paid_amount,'unallocated_amount':0.0},update_modified=False)
+#                 frappe.db.commit()
+                
+#             else:
+#                 pass
+#     except Exception as e:
+#         print(str(e))
+
+
 def bank_transaction(data,method=None):
-    print(data.as_dict())
+    # print(data.as_dict())
     try:
-        if method == 'on_submit':
+        if method == 'on_submit' and data.doctype == 'Payment Entry':
+            if data.party_type == 'Supplier':
+                key = 'withdrawal'
+                value = data.paid_amount
+            else:
+                key = 'deposit'
+                value = data.paid_amount
+                
             if frappe.db.exists("Bank Transaction",
-                                {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no}):
+                                {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no,key:value}):
                 data_get = frappe.get_list("Bank Transaction",
-                                           {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no},['name'])
-                child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': 'Payment Entry','payment_entry': data.name,'allocated_amount':data.paid_amount,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
+                                           {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no,key:value},['name'])
+                child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': data.doctype,'payment_entry': data.name,'allocated_amount':data.paid_amount,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
                 child_data.save()
                 child_data.reload()
                 frappe.db.set_value("Bank Transaction",data_get[0]['name'],{"status":"Reconciled",'allocated_amount':data.paid_amount,'unallocated_amount':0.0},update_modified=False)
                 frappe.db.commit()
-                
             else:
                 pass
+        else:
+            if data.doctype == 'Journal Entry':
+                # if data.accounts[0].party_type == 'Supplier':
+                #     key = 'withdrawal'
+                #     value = data.total_credit
+                # else:
+                #     key = 'deposit'
+                #     value = data.total_credit
+                    
+                if frappe.db.exists("Bank Transaction",
+                                {'status':('in',('Pending','Unreconciled')),'reference_number':data.cheque_no}):
+                    data_get = frappe.get_list("Bank Transaction",
+                                           {'status':('in',('Pending','Unreconciled')),'reference_number':data.cheque_no},['name'])
+                    child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': data.doctype,'payment_entry': data.name,'allocated_amount':data.total_credit,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
+                    child_data.save()
+                    child_data.reload()
+                    frappe.db.set_value("Bank Transaction",data_get[0]['name'],{"status":"Reconciled",'allocated_amount':data.total_credit,'unallocated_amount':0.0},update_modified=False)
+                    frappe.db.commit()
+                else:
+                    pass
+            else:
+                pass                    
+            
     except Exception as e:
         print(str(e))
