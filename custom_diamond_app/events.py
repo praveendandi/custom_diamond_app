@@ -492,12 +492,14 @@ def employee_expense_claim(data,method = None):
             expense_date = data.end_date
             expense_amount = data.net_pay
             payable_account = 'Employee  Expense - DMPL'
+            posting_date = data.posting_date
             
             create_doc = frappe.get_doc({
                 'doctype':'Expense Claim',
                 'employee':employee,
                 'expense_approver':expense_approver[0]['expense_approver'],
                 'approval_status': approval_status,
+                'posting_date' : data.posting_date,
                 'expenses':[
                     {
                         'doctype':'Expense Claim Detail',
