@@ -135,9 +135,11 @@ def get_data(filters,result_condtions):
     if filters.type_of_tree == "Supplier Wise":
         data = frappe.db.sql("""select supplier,supplier_name,supplier_group,sum(grand_total) as grand_total,sum(base_net_total) as taxable_amount
                         from `tabPurchase Invoice` Where docstatus = 1  and is_return != 1 and {conditions} Group by supplier """.format(conditions=result_condtions),as_dict =1)
+        
+        date = f"posting_date Between'{filters.from_date}' and '{filters.to_date}'"
         for i in data:
             data_return = frappe.db.sql("""select supplier,supplier_name,supplier_group,sum(grand_total) as return_amount,sum(base_net_total) as taxable_return_amount
-                            from `tabPurchase Invoice` Where docstatus = 1  and is_return = 1 and supplier = '{conditions}' Group by supplier ORDER BY supplier """.format(conditions=i["supplier"]),as_dict =1)
+                            from `tabPurchase Invoice` Where docstatus = 1  and is_return = 1 and supplier = '{conditions}' and {date} Group by supplier ORDER BY supplier """.format(conditions=i["supplier"],date =date),as_dict =1)
             
             if len(data_return)>0:
                 parent_supplier_group = frappe.db.sql("""select parent_supplier_group from `tabSupplier Group` where name = '{}' """.format(i.supplier_group),as_dict=1)
