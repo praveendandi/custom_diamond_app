@@ -593,7 +593,7 @@ frappe.query_reports["Diamond CR GSTR 2B vs PR GSTIN Matching Tool"] = {
 		});
 		dialog.get_field('preview_html').html('Loading...');
 		dialog.show();
-		dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("width", "719px");
+		dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("max-width", "719px");
 	}
 	
 	var update_status= function(gstr2b, purchase_inv) {
@@ -634,7 +634,7 @@ frappe.query_reports["Diamond CR GSTR 2B vs PR GSTIN Matching Tool"] = {
 		});
 		dialog.get_field('preview_html').html('Loading...');
 		dialog.show();
-		dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("width", "719px");
+		dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("max-width", "719px");
 	}
 	
 	var create_purchase_inv= function(gstr2b, purchase_inv) {
@@ -694,7 +694,7 @@ frappe.query_reports["Diamond CR GSTR 2B vs PR GSTIN Matching Tool"] = {
 		});
 		dialog.get_field('preview_html').html('Loading...');
 		dialog.show();
-		dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("width", "719px");
+		dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("max-width", "719px");
 	}	
 
 	var unlink_pr = function(gstr2b, status) {
@@ -779,7 +779,7 @@ var get_unlinked_pr_list = function(gstr2b, from_date, to_date) {
 			});
 			dialog.get_field('preview_html').html('Loading...');
 			dialog.show();
-			dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("width", "719px");
+			dialog.$wrapper.find('.modal-dialog').css("width", "800px").css("max-width", "719px");
 			}
 		else{
 			frappe.throw(__("No PR found"));
