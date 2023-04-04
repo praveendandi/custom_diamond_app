@@ -80,6 +80,8 @@ fixtures = [
                 'Sales Invoice-get_unpaid_and_partly_paid_invoices',
                 'Sales Invoice-get_paid_invoices',
                 'Sales Invoice-sales_invoice',
+                'Delivery Note-total_material_weight',
+                'Sales Invoice-total_material_weight',
                 # 'Sales Order-transporter_id',
                 ]
         ]]
