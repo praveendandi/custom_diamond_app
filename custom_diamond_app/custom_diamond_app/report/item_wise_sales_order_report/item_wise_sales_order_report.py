@@ -1,6 +1,8 @@
 # Copyright (c) 2023, Ganu Reddy and contributors
 # For license information, please see license.txt
-import copy
+
+# import frappe
+# import copy
 from collections import OrderedDict
 
 import frappe
@@ -41,55 +43,67 @@ def validate_filters(filters):
 
 
 def get_conditions(filters):
+	# print(filters,'--------------')
 	conditions = ""
-	if filters.get("from_date") and filters.get("to_date"):
-		conditions += " and so.transaction_date between %(from_date)s and %(to_date)s"
+
+	conditions += f" and so.transaction_date between'{filters.from_date}' and '{filters.to_date}'"
 
 	if filters.get("company"):
 		conditions += " and so.company = %(company)s"
 
-	if filters.get("sales_order"):
-		conditions += " and so.name in %(sales_order)s"
+	# if filters.get("sales_order"):
+	# 	conditions += " and so.name in %(sales_order)s"
+	
+	if filters.get("customer"):
+		conditions += " and so.customer in %(customer)s"
+	
+	if filters.get("customer_group"):
+		conditions += " and so.customer_group in %(customer_group)s"
 
-	if filters.get("status"):
-		conditions += " and so.status in %(status)s"
+	if filters.get("parent_customer_group") and not filters.get("customer_group"):
+		parent_group = frappe.db.get_list("Customer Group",{'parent_customer_group':filters.get("parent_customer_group")[0]},pluck ='name')
+		data = tuple(parent_group)
+		conditions +=f" and so.customer_group IN {data}"
+		# conditions +=f" and cg.parent_customer_group in %(parent_customer_group)s"
+
+
+	if filters.get("parent_item_group") and not filters.get("item_group"):
+		parent_group = frappe.db.get_list("Item Group",{'parent_item_group':filters.get("parent_item_group")[0]},pluck ='name')
+		data = tuple(parent_group)
+		conditions +=f" and soi.item_group IN {data}"
+
+	if filters.get("item_group"):
+		conditions += " and soi.item_group in %(item_group)s"
+
+	if filters.get("item_code"):
+		conditions += " and soi.item_code in %(item_code)s"
+
+	# if filters.get("status"):
+	# 	conditions += " and so.status in %(status)s"
 
 	return conditions
 
 
 def get_data(conditions, filters):
-	# nosemgrep
 	data = frappe.db.sql(
 		"""
 		SELECT
-			so.transaction_date as date,
-			soi.delivery_date as delivery_date,
-			so.name as sales_order,
-			so.status, so.customer, soi.item_code,
-			DATEDIFF(CURDATE(), soi.delivery_date) as delay_days,
-			IF(so.status in ('Completed','To Bill'), 0, (SELECT delay_days)) as delay,
-			soi.qty, soi.delivered_qty,
-			(soi.qty - soi.delivered_qty) AS pending_qty,
-			IFNULL(SUM(sii.qty), 0) as billed_qty,
-			soi.base_amount as amount,
-			(soi.delivered_qty * soi.base_rate) as delivered_qty_amount,
-			(soi.billed_amt * IFNULL(so.conversion_rate, 1)) as billed_amount,
-			(soi.base_amount - (soi.billed_amt * IFNULL(so.conversion_rate, 1))) as pending_amount,
-			soi.warehouse as warehouse,
+			so.name as sales_order,so.status, so.customer,so.customer_group,soi.item_code,soi.item_group,
+			SUM(soi.qty) AS qty, SUM(soi.delivered_qty) AS delivered_qty,(SUM(soi.qty) - SUM(soi.delivered_qty)) AS pending_qty,
+			
 			so.company, soi.name,
 			soi.description as description
 		FROM
 			`tabSales Order` so,
 			`tabSales Order Item` soi
-		LEFT JOIN `tabSales Invoice Item` sii
-			ON sii.so_detail = soi.name and sii.docstatus = 1
+	
 		WHERE
 			soi.parent = so.name
 			and so.status not in ('Stopped', 'Closed', 'On Hold')
 			and so.docstatus = 1
 			{conditions}
-		GROUP BY soi.name
-		ORDER BY so.transaction_date ASC, soi.item_code ASC
+		GROUP BY so.customer,soi.item_code
+		ORDER BY so.transaction_date ASC, soi.item_code ASC,soi.item_group ASC
 	""".format(
 			conditions=conditions
 		),
@@ -97,7 +111,17 @@ def get_data(conditions, filters):
 		as_dict=1,
 	)
 
+	for i in data:
+		parent_customer_group = frappe.db.get_list("Customer Group",{"name":i.customer_group},["parent_customer_group"])
+		if parent_customer_group:
+			i["parent_customer_group"] = parent_customer_group[0]['parent_customer_group']
+			
+		parent_item_group = frappe.db.get_list("Item Group",{"name":i.item_group},["parent_item_group"])
+		if parent_item_group:
+			i["parent_item_group"] = parent_item_group[0]['parent_item_group']
+	# print(data,'//////////////////////')
 	return data
+	
 
 
 def get_so_elapsed_time(data):
@@ -148,12 +172,12 @@ def prepare_data(data, so_elapsed_time, filters):
 		sales_order_map = {}
 
 	for row in data:
-		completed += row["billed_amount"]
-		pending += row["pending_amount"]
+		# completed += row["billed_amount"]
+		# pending += row["pending_amount"]
 
-		row["qty_to_bill"] = flt(row["qty"]) - flt(row["billed_qty"])
+		# row["qty_to_bill"] = flt(row["qty"]) - flt(row["billed_qty"])
 
-		row["delay"] = 0 if row["delay"] and row["delay"] < 0 else row["delay"]
+		# row["delay"] = 0 if row["delay"] and row["delay"] < 0 else row["delay"]
 
 		row["time_taken_to_deliver"] = (
 			so_elapsed_time.get((row.sales_order, row.item_code))
@@ -170,7 +194,7 @@ def prepare_data(data, so_elapsed_time, filters):
 			else:
 				so_row = sales_order_map[so_name]
 				so_row["required_date"] = max(getdate(so_row["delivery_date"]), getdate(row["delivery_date"]))
-				so_row["delay"] = min(so_row["delay"], row["delay"])
+				# so_row["delay"] = min(so_row["delay"], row["delay"])
 
 				fields = [
 					"qty",
@@ -210,21 +234,28 @@ def prepare_chart_data(pending, completed):
 
 def get_columns(filters):
 	columns = [
-		{"label": _("Date"), "fieldname": "date", "fieldtype": "Date", "width": 90},
-		{
-			"label": _("Sales Order"),
-			"fieldname": "sales_order",
-			"fieldtype": "Link",
-			"options": "Sales Order",
-			"width": 160,
-		},
-		# {"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 130},
+
 		{
 			"label": _("Customer"),
 			"fieldname": "customer",
 			"fieldtype": "Link",
 			"options": "Customer",
 			"width": 130,
+		},
+		{
+			"label": _("Customer Group"),
+			"fieldname": "customer_group",
+			"fieldtype": "Link",
+			"options": "Customer Group",
+			"width": 130,
+		},
+		{
+			"label": _("Parent Customer Group"),
+			"fieldname": "parent_customer_group",
+			"fieldtype": "Link",
+			"options": "Customer Group",
+			"width": 130,
+			"is_group":1
 		},
 	]
 
@@ -243,36 +274,46 @@ def get_columns(filters):
 	columns.extend(
 		[
 			{
-				"label": _("Qty"),
+				"label": _("Item Group"),
+				"fieldname": "item_group",
+				"fieldtype": "Link",
+				"options": "Item Group",
+				"width": 100,
+				
+			},
+			{
+				"label": _("Parent Item Group"),
+				"fieldname": "parent_item_group",
+				"fieldtype": "Link",
+				"options": "Item Group",
+				"width": 100,
+				"is_group":1
+			},
+			{
+				"label": _("Ordered Qty"),
 				"fieldname": "qty",
 				"fieldtype": "Float",
 				"width": 120,
 				"convertible": "qty",
 			},
 			{
-				"label": _("Out Qty"),
+				"label": _("Delivered Qty"),
 				"fieldname": "delivered_qty",
 				"fieldtype": "Float",
 				"width": 120,
 				"convertible": "qty",
 			},
-			{
-				"label": _("Amount"),
-				"fieldname": "amount",
-				"fieldtype": "Currency",
-				"width": 110,
-				"options": "Company:company:default_currency",
-				"convertible": "rate",
-			},
+			
 			{
 				"label": _("Short Qty"),
 				"fieldname": "pending_qty",
 				"fieldtype": "Float",
 				"width": 120,
 				"convertible": "qty",
-			}
+			},
+
+
 		]
 	)
 
 	return columns
-

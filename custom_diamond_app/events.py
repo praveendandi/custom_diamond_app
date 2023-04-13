@@ -31,6 +31,7 @@ from erpnext.stock.doctype.item.item import get_item_defaults
 from erpnext.stock.get_item_details import get_default_bom
 from erpnext.stock.stock_balance import get_reserved_qty, update_bin_qty
 import datetime
+#import sys
 
 
 @frappe.whitelist()
@@ -276,3 +277,327 @@ def stock_entry_after_submit_purchase_recipt(doc,method=None):
             else:
                 frappe.throw("BOM Not Exists for Item {}".format(item_codes))
         # doc_insert.submit()
+
+def bom_item_uom(doc,method=None):
+    try:
+        bom_data = frappe.db.get_list("BOM Item",filters={"parent":doc.name},fields=['item_code','uom'])
+        for i in bom_data:
+            item_data = frappe.db.get_list("UOM Conversion Detail",filters={"parent":i.item_code},fields=['uom'])
+            print(i,"*********",item_data)
+            if next((j for j in item_data if j["uom"] == i.uom),False):
+                pass
+            else:
+                frappe.throw(_("Please select proper UOM of {0}").format(i.item_code))
+    except frappe.MandatoryError as e:
+        print(e)
+       
+def posting_date(doc,method=None):
+    data=frappe.db.get_value("Payment Entry",doc.name,'reference_date')  
+    data1=frappe.db.set_value("Payment Entry",doc.name,'posting_date',data)
+    
+def journal_entry(doc,method=None):
+    if frappe.db.exists("Journal Entry",doc.name,'cheque_date'):
+        value= frappe.db.get_value("Journal Entry",doc.name,'cheque_date')  
+        value_update=frappe.db.set_value("Journal Entry",doc.name,'posting_date',value)   
+        
+
+# def create_journal_entry_through_si_return(data,method=None):
+#     try:
+#         if data.is_return and method == 'on_submit':
+#             total = 0.0
+#             data_doc = {"doctype":"Journal Entry","cheque_no":data.name,"cheque_date":data.posting_date,"voucher_type":"Credit Note","posting_date":data.posting_date,}
+#             accounts = []
+#             for i in range(len(data.sales_invoice)):
+#                 accounts.append(
+#                     {
+#                         "doctype":"Journal Entry Account",
+#                         "account":"Debtors - DMPL",
+#                         "party_type":"Customer",
+#                         "party":data.customer,
+#                         "reference_type":"Sales Invoice",
+#                         "reference_name":data.sales_invoice[i].reference_no,
+#                         "credit_in_account_currency":data.sales_invoice[i].allocated_amount
+#                     })
+                                
+#                 total += data.sales_invoice[i].allocated_amount
+                 
+#             accounts.append({"doctype":"Journal Entry Account", "account":'Sales - DMPL',"debit_in_account_currency": total})
+#             data_doc["accounts"] = accounts
+#             print(data_doc,"/......")
+#             doc = frappe.get_doc(data_doc)
+#             doc.docstatus = 1
+#             doc.insert()
+#             frappe.db.commit()
+#         else:
+#             if method == 'on_cancel':
+#                 if frappe.db.exists('Journal Entry',{"cheque_no":data.name}):
+#                     journal_name = frappe.db.get_list("Journal Entry",{"cheque_no":data.name},["name"])
+#                     name = journal_name[0]['name']
+#                     doc = frappe.get_doc("Journal Entry", name)
+#                     doc.cancel()
+                
+#     except Exception as e:
+#         print(str(e))
+        # exc_type, exc_obj, exc_tb = sys.exc_info()
+        # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
+
+@frappe.whitelist()
+def get_unpaid_sales_invoices(data):
+    # print("Test________________",data)
+    try:
+        data_doc = json.loads(data)
+        if data_doc['get_unpaid_and_partly_paid_invoices']:
+            get_unpaid_and_partly_invoice = frappe.db.sql("""Select name,customer,base_total,outstanding_amount from `tabSales Invoice` 
+                                        Where customer ='{customer}' and status IN ('Overdue','Unpaid','Partly Paid') Order by posting_date asc""".format(customer=data_doc["customer"]),as_dict=True)
+        
+        if data_doc['get_paid_invoices']:
+            
+            get_paid_invoice = frappe.db.sql("""Select name,customer,base_total,outstanding_amount from `tabSales Invoice` 
+                                        Where customer ='{customer}' and status ='Paid' """.format(customer=data_doc["customer"]),as_dict=True)
+        
+        if len(get_unpaid_and_partly_invoice):
+            return_outstanding_amount = 0.0
+            return_outstanding_amount += abs(data_doc['outstanding_amount'])
+            for i in get_unpaid_and_partly_invoice:
+                if i['outstanding_amount'] <= return_outstanding_amount:
+                    i["allocated_amount"] = i['outstanding_amount']
+                    return_outstanding_amount -= i['outstanding_amount']
+                else:
+                    i['allocated_amount'] = return_outstanding_amount
+                    return_outstanding_amount = 0.0
+            
+            return get_unpaid_and_partly_invoice
+        else:
+            pass
+        
+        if len(get_paid_invoice):
+            return_outstanding_amount = 0.0
+            return_outstanding_amount += abs(data_doc['outstanding_amount'])
+            for i in get_paid_invoice:
+                if i['outstanding_amount'] <= return_outstanding_amount:
+                    i["allocated_amount"] = i['outstanding_amount']
+                    return_outstanding_amount -= i['outstanding_amount']
+                else:
+                    i['allocated_amount'] = return_outstanding_amount
+                    return_outstanding_amount = 0.0
+            
+            return get_paid_invoice
+        else:
+            pass
+            
+    except Exception as e:
+        print(str(e))
+        # exc_type, exc_obj, exc_tb = sys.exc_info()
+        # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "get_unpaid_sales_invoices")
+        
+    
+def update_addition_amount(data,method=None):
+    print("..............................")
+    total_amount = 0.0
+    if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1 and method != 'on_cancel':
+        if len(data.sales_invoice) :
+            for i in range(len(data.sales_invoice)):
+                total_amount +=data.sales_invoice[i].allocated_amount
+                print(data.sales_invoice[i].allocated_amount)
+            
+            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
+            frappe.db.commit()
+    else:
+        if data.is_return ==1 and method != 'on_cancel':
+            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
+            frappe.db.commit()
+        
+        
+        
+        
+
+def create_GL_entry_through_si_return(data,method=None):
+    try:
+        if data.get_unpaid_and_partly_paid_invoices==1 and method == 'on_submit':
+            
+            # Fetch the GL Entry DocType
+            for i in range(len(data.sales_invoice)):
+                frappe.reload_doctype('GL Entry')
+                # frappe.reload('GL Entry')
+                # print("iiiiiiiiiiiiiiiiiiiii",i,data.sales_invoice[i].reference_no)
+                gl_entry = frappe.get_doc({
+                    "doctype": "GL Entry",
+                    "posting_date": data.posting_date,
+                    "party_type":"Customer",
+                    "party":data.customer,
+                    "account": "Debtors - DMPL",
+                    "debit": 0.00,
+                    "debit_in_account_currency":0.00,
+                    "credit": data.sales_invoice[i].allocated_amount,
+                    "credit_in_account_currency":data.sales_invoice[i].allocated_amount,
+                    "against":"Sales - DMPL",
+                    "against_voucher_type":"Sales Invoice",
+                    "against_voucher":data.sales_invoice[i].reference_no,
+                    "voucher_type":"Sales Invoice",
+                    "voucher_no": data.name,
+                    "remarks":data.name,
+                    "is_opening":"No",
+                    "is_advance":"No",
+                    # "fiscal_year":"2022-2023",
+                    "company":"DIAMOND MODULAR PRIVATE LIMITED",
+                })
+                
+                # Save the GL Entry
+                # gl_entry.docstatus =1
+                gl_entry.insert()
+               
+            
+            for j in range(len(data.sales_invoice)):
+                if frappe.db.exists('Sales Invoice',{"name":data.sales_invoice[j].reference_no}):
+                    get_data = frappe.db.get_list("Sales Invoice",{"name":data.sales_invoice[j].reference_no},['name','outstanding_amount','status'])
+                    print(get_data,"................................")
+                    
+                    if int(get_data[0]['outstanding_amount']) == int(data.sales_invoice[j].allocated_amount) and get_data[0]['status'] == 'Unpaid':
+
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[j].reference_no,{"status":"Paid",'outstanding_amount':0.0},update_modified=False)
+                        frappe.db.commit()
+    
+                    else:
+                        sub_outstanding_amount = get_data[0]['outstanding_amount'] - data.sales_invoice[j].allocated_amount
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[j].reference_no,{"status":"Partly Paid",'outstanding_amount':sub_outstanding_amount},update_modified=False)
+                        frappe.db.commit()
+            
+        if data.get_unpaid_and_partly_paid_invoices==1 and  method == 'on_cancel':
+            for k in range(len(data.sales_invoice)):
+                print("//////////////////,,,,,,,,,,,,,,,,,,,,,,,,,,")
+                if frappe.db.exists('Sales Invoice',{"name":data.sales_invoice[k].reference_no}) and method == 'on_cancel':
+                    get_data = frappe.db.get_list("Sales Invoice",{"name":data.sales_invoice[k].reference_no},['name','outstanding_amount','status'])
+                    print(get_data,"/////////////////////")
+                    if int(get_data[0]['outstanding_amount']) == 0 and get_data[0]['status'] == 'Paid':
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':data.sales_invoice[k].allocated_amount},update_modified=False)
+                        frappe.db.commit()
+                    else:
+                        sub_outstanding_amount = get_data[0]['outstanding_amount'] + data.sales_invoice[k].allocated_amount
+                        frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':sub_outstanding_amount},update_modified=False)
+                        frappe.db.commit()
+    
+                    
+    except Exception as e:
+        print(str(e))
+        # exc_type, exc_obj, exc_tb = sys.exc_info()
+        # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
+        
+        
+def employee_expense_claim(data,method = None):
+    try:
+        if method == 'on_submit':
+            approval_status = 'Approved'
+            employee = data.employee
+            expense_approver = frappe.db.get_list('Employee',{'name':employee},['expense_approver'])
+            expense_date = data.end_date
+            expense_amount = data.net_pay
+            payable_account = 'Employee  Expense - DMPL'
+            posting_date = data.posting_date
+            
+            create_doc = frappe.get_doc({
+                'doctype':'Expense Claim',
+                'employee':employee,
+                'expense_approver':expense_approver[0]['expense_approver'],
+                'approval_status': approval_status,
+                'posting_date' : data.posting_date,
+                'expenses':[
+                    {
+                        'doctype':'Expense Claim Detail',
+                        'expense_date': expense_date,
+                        'expense_type': 'Others',
+                        'description': 'Salary',
+                        'amount':expense_amount,
+                        'sanctioned_amount':expense_amount,
+                        'cost_center': 'Main - DMPL'
+                        
+                    }
+                ],
+                'payable_account': payable_account,
+                'grand_total': expense_amount,
+                'remark':data.name
+            })
+        
+            create_doc.docstatus = 1
+            create_doc.insert()
+            frappe.db.commit()
+            
+        else: 
+            if method  == 'on_cancel':
+                if frappe.db.exists('Expense Claim',{"remark":data.name}):
+                    expense_name = frappe.db.get_list("Expense Claim",{"remark":data.name},["name"])
+                    name = expense_name[0]['name']
+                    doc = frappe.get_doc("Expense Claim", name)
+                    doc.cancel()
+    except Exception as e:
+        print(str(e))
+        
+
+# def bank_transaction(data,method=None):
+#     print(data.as_dict())
+#     try:
+#         if method == 'on_submit':
+#             if frappe.db.exists("Bank Transaction",
+#                                 {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no}):
+#                 data_get = frappe.get_list("Bank Transaction",
+#                                            {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no},['name'])
+#                 child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': 'Payment Entry','payment_entry': data.name,'allocated_amount':data.paid_amount,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
+#                 child_data.save()
+#                 child_data.reload()
+#                 frappe.db.set_value("Bank Transaction",data_get[0]['name'],{"status":"Reconciled",'allocated_amount':data.paid_amount,'unallocated_amount':0.0},update_modified=False)
+#                 frappe.db.commit()
+                
+#             else:
+#                 pass
+#     except Exception as e:
+#         print(str(e))
+
+
+def bank_transaction(data,method=None):
+    # print(data.as_dict())
+    try:
+        if method == 'on_submit' and data.doctype == 'Payment Entry':
+            if data.party_type == 'Supplier':
+                key = 'withdrawal'
+                value = data.paid_amount
+            else:
+                key = 'deposit'
+                value = data.paid_amount
+                
+            if frappe.db.exists("Bank Transaction",
+                                {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no,key:value}):
+                data_get = frappe.get_list("Bank Transaction",
+                                           {'status':('in',('Pending','Unreconciled')),'reference_number':data.reference_no,key:value},['name'])
+                child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': data.doctype,'payment_entry': data.name,'allocated_amount':data.paid_amount,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
+                child_data.save()
+                child_data.reload()
+                frappe.db.set_value("Bank Transaction",data_get[0]['name'],{"status":"Reconciled",'allocated_amount':data.paid_amount,'unallocated_amount':0.0},update_modified=False)
+                frappe.db.commit()
+            else:
+                pass
+        else:
+            if data.doctype == 'Journal Entry':
+                # if data.accounts[0].party_type == 'Supplier':
+                #     key = 'withdrawal'
+                #     value = data.total_credit
+                # else:
+                #     key = 'deposit'
+                #     value = data.total_credit
+                    
+                if frappe.db.exists("Bank Transaction",
+                                {'status':('in',('Pending','Unreconciled')),'reference_number':data.cheque_no}):
+                    data_get = frappe.get_list("Bank Transaction",
+                                           {'status':('in',('Pending','Unreconciled')),'reference_number':data.cheque_no},['name'])
+                    child_data = frappe.get_doc({'doctype':'Bank Transaction Payments','payment_document': data.doctype,'payment_entry': data.name,'allocated_amount':data.total_credit,'parent':data_get[0]['name'],'parentfield':'payment_entries','parenttype':'Bank Transaction'})
+                    child_data.save()
+                    child_data.reload()
+                    frappe.db.set_value("Bank Transaction",data_get[0]['name'],{"status":"Reconciled",'allocated_amount':data.total_credit,'unallocated_amount':0.0},update_modified=False)
+                    frappe.db.commit()
+                else:
+                    pass
+            else:
+                pass                    
+            
+    except Exception as e:
+        print(str(e))
+
+#Test Comment

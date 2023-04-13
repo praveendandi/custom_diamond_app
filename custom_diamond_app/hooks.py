@@ -75,7 +75,13 @@ fixtures = [
                 'Customer-transporter_gstn',
                 'Sales Invoice-name_of_transporter_',
                 'Sales Invoice-transporter_gstn',
-                'Bank Account-branch',
+                'Sales Invoice-Bank Account-branch',
+                'Sales Invoice-return_sales_invoices',
+                'Sales Invoice-get_unpaid_and_partly_paid_invoices',
+                'Sales Invoice-get_paid_invoices',
+                'Sales Invoice-sales_invoice',
+                'Delivery Note-total_material_weight',
+                'Sales Invoice-total_material_weight',
                 # 'Sales Order-transporter_id',
                 ]
         ]]
@@ -141,7 +147,29 @@ doc_events = {
    "Purchase Receipt": {
         "before_submit":"custom_diamond_app.events.stock_entry_after_submit_purchase_recipt"
     },
-
+    "BOM":{
+        "on_update":"custom_diamond_app.events.bom_item_uom"
+    },
+    'Payment Entry':{
+        # 'on_update':'custom_diamond_app.events.posting_date',
+        "on_submit":'custom_diamond_app.events.bank_transaction'
+    },
+    # 'Journal Entry':{
+    #     'on_update':'custom_diamond_app.events.journal_entry'
+    # },
+    "Journal Entry":{
+		"on_submit":'custom_diamond_app.events.bank_transaction'
+	},
+	"Sales Invoice": {
+		"on_submit":"custom_diamond_app.events.create_GL_entry_through_si_return",
+		"on_update":"custom_diamond_app.events.update_addition_amount",
+		"on_cancel":"custom_diamond_app.events.create_GL_entry_through_si_return"
+	},
+ 	"Salary Slip":{
+		"on_submit":"custom_diamond_app.events.employee_expense_claim",
+  		"on_cancel":"custom_diamond_app.events.employee_expense_claim"
+	},
+   
 }	
 
 # Scheduled Tasks
