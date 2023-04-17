@@ -175,7 +175,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron": {
+        "45 0 * * *": [
+			"custom_diamond_app.reorder_level.reorder_item",
+		],
+    }
 # 	"all": [
 # 		"custom_diamond_app.tasks.all"
 # 	],
@@ -191,7 +196,7 @@ doc_events = {
 # 	"monthly": [
 # 		"custom_diamond_app.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------
@@ -207,7 +212,9 @@ doc_events = {
 override_whitelisted_methods = {
     "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note":"custom_diamond_app.events.make_delivery_note"
 }
-
+# override_whitelisted_methods = {
+#     "erpnext.stock.reorder_item.reorder_item":"custom_diamond_app.reorder_level.reorder_item"
+# }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
