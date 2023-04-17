@@ -94,7 +94,8 @@ frappe.query_reports["Diamond Sales Report"] = {
 				return frappe.db.get_link_options('Item', txt,{
 					item_group :base_value[0]
 				});
-			}
+			},
+			"hidden": 1,
 		},
 		{
 			'fieldname':"net_salses",

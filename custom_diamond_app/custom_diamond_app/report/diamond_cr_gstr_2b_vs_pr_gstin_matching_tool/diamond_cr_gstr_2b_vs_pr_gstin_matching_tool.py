@@ -274,7 +274,7 @@ class MatchingTool(object):
 				'cf_purchase_invoice', 'cf_match_status', 'cf_reason', 'cf_status', 'cf_tax_amount','cf_taxable_amount', 'name', 'cf_party','cf_trade_name'])
 
 			for entry in gstr2b_entries:
-				bill_details = frappe.db.get_value("Purchase Invoice", {'name':entry['cf_purchase_invoice']}, ['bill_no', 'bill_date', 'total'])
+				bill_details = frappe.db.get_value("Purchase Invoice", {'name':entry['cf_purchase_invoice']}, ['bill_no', 'bill_date', 'net_total'])
 				button = f"""
 				<div>
 				<Button class="btn btn-primary btn-xs left"  style="margin: 2px;" gstr2b = {entry["name"]} purchase_inv ={entry["cf_purchase_invoice"]} onClick='update_status(this.getAttribute("gstr2b"), this.getAttribute("purchase_inv"))'>View</a>
@@ -317,7 +317,7 @@ class MatchingTool(object):
 					if 'supplier_gstin' in self.filters:
 						pr_conditions.append(['supplier_gstin' ,'=', self.filters['supplier_gstin']])
 
-					pr_entries = frappe.db.get_all('Purchase Invoice', filters=pr_conditions, fields =['name', 'bill_no', 'bill_date', 'total', 'supplier_gstin', 'supplier','supplier_name'])
+					pr_entries = frappe.db.get_all('Purchase Invoice', filters=pr_conditions, fields =['name', 'bill_no', 'bill_date', 'total', 'net_total','supplier_gstin', 'supplier','supplier_name'])
 
 					for inv in pr_entries:
 						is_linked = frappe.db.get_value('CD GSTR 2B Entry', {'cf_purchase_invoice': inv['name']}, 'name')
@@ -334,7 +334,7 @@ class MatchingTool(object):
 								'pr_invoice_date': inv['bill_date'],
 								'tax_difference': tax_diff,
 								'2b_taxable_value': None,
-								'pr_taxable_value': inv['total'],
+								'pr_taxable_value': inv['net_total'],
 								'match_status': 'Missing in 2B', 
 								'reason':None,
 								'status': None,

@@ -151,7 +151,7 @@ doc_events = {
         "on_update":"custom_diamond_app.events.bom_item_uom"
     },
     'Payment Entry':{
-        'on_update':'custom_diamond_app.events.posting_date',
+        # 'on_update':'custom_diamond_app.events.posting_date',
         "on_submit":'custom_diamond_app.events.bank_transaction'
     },
     # 'Journal Entry':{
