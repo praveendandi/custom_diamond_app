@@ -82,6 +82,7 @@ fixtures = [
                 'Sales Invoice-sales_invoice',
                 'Delivery Note-total_material_weight',
                 'Sales Invoice-total_material_weight',
+                'Item Group-sales_views_report',
                 # 'Sales Order-transporter_id',
                 ]
         ]]

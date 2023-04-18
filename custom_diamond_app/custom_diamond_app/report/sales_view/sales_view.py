@@ -201,7 +201,7 @@ def get_data(filters,result_condtions):
     if filters.type_of_tree == "Item Group Wise":
         if filters['item_parent_Group']:
             parent_group = filters['item_parent_Group'][0]
-            item_group_wise = frappe.db.sql("""select name from `tabItem Group` where parent_item_group = '{}' """.format(parent_group),as_dict=1)
+            item_group_wise = frappe.db.sql("""select name from `tabItem Group` where sales_views_report != 1 and parent_item_group = '{}' """.format(parent_group),as_dict=1)
             name = tuple([i["name"] for i in item_group_wise])
             data = frappe.db.sql("""select si.customer,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
                                 si.docstatus = 1 and soi.item_group IN {name} and {condition}
@@ -233,7 +233,7 @@ def get_data(filters,result_condtions):
     if filters.type_of_tree == "Item Group Wise Qty":
         if filters['item_parent_Group']:
             parent_group = filters['item_parent_Group'][0]
-            item_group_wise = frappe.db.sql("""select name from `tabItem Group` where parent_item_group = '{}' """.format(parent_group),as_dict=1)
+            item_group_wise = frappe.db.sql("""select name from `tabItem Group` where sales_views_report != 1 and  parent_item_group = '{}' """.format(parent_group),as_dict=1)
             name = tuple([i["name"] for i in item_group_wise])
             data = frappe.db.sql("""select si.customer,si.customer_group,soi.item_group,SUM(soi.qty) as qty from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
                                 si.docstatus = 1 and soi.item_group IN {name} and {condition}
@@ -382,7 +382,7 @@ def get_columns(filters):
         ]
         if filters['item_parent_Group']:
             parent_group = filters['item_parent_Group'][0]
-            item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group},pluck='name')
+            item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group,'sales_views_report':0},pluck='name')
         columns += [{"label": _(each),"fieldname": each, "fieldtype": "Currency", "width": 150} for each in item_group]
         columns +=[{"label":_("Total"),"fieldname":"total","fieldtype":"Currency","width":150}]
         
@@ -404,7 +404,7 @@ def get_columns(filters):
         ]
         if filters['item_parent_Group']:
             parent_group = filters['item_parent_Group'][0]
-            item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group},pluck='name')
+            item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group,'sales_views_report':0},pluck='name')
         columns += [{"label": _(each),"fieldname": each, "fieldtype": "Data", "width": 150} for each in item_group]
         columns +=[{"label":_("Total Qty"),"fieldname":"total_qty","fieldtype":"Data","width":150}]
 
