@@ -9,6 +9,7 @@ from frappe.utils import flt
 def execute(filters=None):
     if not filters:
         return [], []
+    print(filters,"//////////////////////////////")
 
     validate_filters(filters)
     result_columns = get_columns(filters)
@@ -27,6 +28,11 @@ def validate_filters(filters):
     if filters.get("from_date") > filters.get("to_date"):
         frappe.throw(
             _("{0} not greater than To Date").format(frappe.bold(_("From Date")))
+        )
+    
+    if filters.get("net_salses") and  filters.get("replacement"):
+        frappe.throw(
+            _(" You cannot check both net_salses and replacement")
         )
 
   
@@ -83,12 +89,18 @@ def get_conditions(filters):
             customer = filters["customer"][0]
             condition += f" and si.customer = '{customer}'"
         return condition
+    
     if filters.type_of_tree == "Item Group Wise":
         condition = ""
         condition += f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
-        if not filters.net_salses:
-            condition+=f' and si.is_return != 1'
-            pass
+        
+        if not filters.replacement and not filters.net_salses:
+            condition+=f' and si.is_return != 1 '
+        
+        if filters.replacement:
+            condition+=f' and si.is_return = 1 '
+
+        
         if filters['customer_parent_group'] and not filters['customer_group']:
             customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters['customer_parent_group'][0]},["name"])
             if len(customer_group)>2:
@@ -105,14 +117,20 @@ def get_conditions(filters):
         if filters['customer']:
             customer = filters["customer"][0]
             condition += f" and si.customer = '{customer}'"
+        
             
         return condition
+    
     if filters.type_of_tree == "Item Group Wise Qty":
         condition = ""
         condition += f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
-        if not filters.net_salses:
-            condition+=f' and si.is_return != 1'
-            pass
+        
+        if not filters.replacement and not filters.net_salses:
+            condition+=f' and si.is_return != 1 '
+
+        if filters.replacement:
+            condition+=f' and si.is_return = 1 '
+                    
         if filters['customer_parent_group'] and not filters['customer_group']:
             customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters['customer_parent_group'][0]},["name"])
             if len(customer_group)>2:
@@ -203,58 +221,157 @@ def get_data(filters,result_condtions):
             parent_group = filters['item_parent_Group'][0]
             item_group_wise = frappe.db.sql("""select name from `tabItem Group` where sales_views_report != 1 and parent_item_group = '{}' """.format(parent_group),as_dict=1)
             name = tuple([i["name"] for i in item_group_wise])
-            data = frappe.db.sql("""select si.customer,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
-                                si.docstatus = 1 and soi.item_group IN {name} and {condition}
-                                Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name=name,condition=result_condtions), as_dict=1)
-            if len(data) >0:
-                data_1 = []
-                for i in data:
-                    value = {}
-                    value['customer'] = i.get('customer')
-                    value['customer_group'] = i.get('customer_group')
-                    value[i.get('item_group')] = i.get("amount")
-                    value['total'] = i.get("amount")
-                    data_1.append(value)
-                    
-                data_convert = pd.DataFrame.from_records(data_1,)
-                final_data = data_convert.groupby(['customer',"customer_group"],as_index=False).sum()
-                convert_data = final_data.to_dict('records')
             
+            if not filters.net_salses:
+                data = frappe.db.sql("""select si.customer,si.customer_name,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                    si.docstatus = 1 and soi.item_group IN {name} and {condition}
+                                    Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name=name,condition=result_condtions), as_dict=1)
+            
+                if len(data) >0:
+                    data_1 = []
+                    for i in data:
+                        value = {}
+                        value['customer'] = i.get('customer')
+                        value['customer_name'] = i.get('customer_name')
+                        value['customer_group'] = i.get('customer_group')
+                        value[i.get('item_group')] = i.get("amount")
+                        value['total'] = i.get("amount")
+                        data_1.append(value)
+                    
+                data_convert = pd.DataFrame.from_records(data_1)
+                final_data = data_convert.groupby(['customer',"customer_group",'customer_name'],as_index=False).sum()
+                convert_data = final_data.to_dict('records')
                 if filters.customer_parent_group != [] or filters.customer_group != [] :
-                    return convert_data   
-                # if filters.customer_parent_group != [] or filters.customer_parent_group != [] :
-                #     return convert_data
-                # elif filters.customer_group != []:
-                #     return convert_data
+                    return convert_data  
+                 
+                
+            if filters.net_salses:
+                net_data = frappe.db.sql("""select si.customer,si.customer_name,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                si.docstatus = 1 and soi.item_group IN {name} and {condition}  and si.is_return != 1
+                                Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name=name,condition=result_condtions), as_dict=1)
+                
+                if len(net_data) >0:
+                    data_1_net = []
+                    for i in net_data:
+                        value = {}
+                        value['customer'] = i.get('customer')
+                        value['customer_name'] = i.get('customer_name')
+                        value['customer_group'] = i.get('customer_group')
+                        value[i.get('item_group')] = i.get("amount")
+                        value['total'] = i.get("amount")
+                        data_1_net.append(value)
+                        
+                data_convert_net = pd.DataFrame.from_records(data_1_net)
+                final_data_net = data_convert_net.groupby(['customer',"customer_group"],as_index=False).sum()
+                   
+                return_data = frappe.db.sql("""select si.customer,si.customer_name,si.customer_group,soi.item_group,SUM(soi.amount) as amount from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                si.docstatus = 1  and soi.item_group IN {name1} and {condition1} and si.is_return = 1
+                                Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name1=name,condition1=result_condtions), as_dict=1)
+                
+                if len(return_data) >0:
+                    data_1_return = []
+                    for i in return_data:
+                        value = {}
+                        value['customer'] = i.get('customer')
+                        value['customer_name'] = i.get('customer_name')
+                        value['customer_group'] = i.get('customer_group')
+                        value[i.get('item_group')] = i.get("amount")
+                        value['total'] = i.get("amount")
+                        data_1_return.append(value)
+                        
+                    data_convert_return = pd.DataFrame.from_records(data_1_return)  
+                    final_data_return = data_convert_return.groupby(['customer',"customer_group","customer_name"],as_index=False).sum()
+ 
+                
+                data = final_data_net.append(final_data_return)
+                final_data = data.groupby(['customer',"customer_group",'customer_name'],as_index=False).sum()
+                print(final_data)
+                convert_data = final_data.to_dict('records')
+                if filters.customer_parent_group != [] or filters.customer_group != [] :
+                    return convert_data 
+                    
                 
                 
-                # return convert_data
+            
+            
     
     if filters.type_of_tree == "Item Group Wise Qty":
         if filters['item_parent_Group']:
             parent_group = filters['item_parent_Group'][0]
             item_group_wise = frappe.db.sql("""select name from `tabItem Group` where sales_views_report != 1 and  parent_item_group = '{}' """.format(parent_group),as_dict=1)
             name = tuple([i["name"] for i in item_group_wise])
-            data = frappe.db.sql("""select si.customer,si.customer_group,soi.item_group,SUM(soi.qty) as qty from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
-                                si.docstatus = 1 and soi.item_group IN {name} and {condition}
+            if not filters.net_salses:
+                data = frappe.db.sql("""select si.customer,si.customer_name,si.customer_group,soi.item_group,SUM(soi.qty) as qty from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                    si.docstatus = 1 and soi.item_group IN {name} and {condition}
+                                    Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name=name,condition=result_condtions), as_dict=1)
+                if len(data) >0:
+                    data_1 = []
+                
+                    for i in data:
+                        value = {}
+                        value['customer'] = i.get('customer')
+                        value['customer_name'] = i.get('customer_name')
+                        value['customer_group'] = i.get('customer_group')
+                        value[i.get('item_group')] = i.get("qty")
+                        value['total_qty'] = i.get("qty")
+                        data_1.append(value)
+                        
+                    data_convert = pd.DataFrame.from_records(data_1,)
+                    final_data = data_convert.groupby(['customer',"customer_group",'customer_name'],as_index=False).sum()
+                    convert_data = final_data.to_dict('records')
+                    # return convert_data
+                    if filters.customer_parent_group != [] or filters.customer_group != [] :
+                        return convert_data 
+                
+                
+            if filters.net_salses:
+                net_data = frappe.db.sql("""select si.customer,si.customer_name,si.customer_group,soi.item_group,SUM(soi.qty) as qty from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                si.docstatus = 1 and soi.item_group IN {name} and {condition}  and si.is_return != 1
                                 Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name=name,condition=result_condtions), as_dict=1)
-            if len(data) >0:
-                data_1 = []
-               
-                for i in data:
-                    value = {}
-                    value['customer'] = i.get('customer')
-                    value['customer_group'] = i.get('customer_group')
-                    value[i.get('item_group')] = i.get("qty")
-                    value['total_qty'] = i.get("qty")
-                    data_1.append(value)
-                    
-                data_convert = pd.DataFrame.from_records(data_1,)
-                final_data = data_convert.groupby(['customer',"customer_group"],as_index=False).sum()
+                
+                if len(net_data) >0:
+                    data_1_net = []
+                    for i in net_data:
+                        value = {}
+                        value['customer'] = i.get('customer')
+                        value['customer_name'] = i.get('customer_name')
+                        value['customer_group'] = i.get('customer_group')
+                        value[i.get('item_group')] = i.get("qty")
+                        value['total_qty'] = i.get("qty")
+                        data_1_net.append(value)
+                        
+                data_convert_net = pd.DataFrame.from_records(data_1_net)
+                final_data_net = data_convert_net.groupby(['customer',"customer_group",'customer_name'],as_index=False).sum()
+                   
+                return_data = frappe.db.sql("""select si.customer,si.customer_name,si.customer_group,soi.item_group,SUM(soi.qty) as qty from `tabSales Invoice` as si,`tabSales Invoice Item` as soi Where soi.parent = si.name and
+                                si.docstatus = 1  and soi.item_group IN {name1} and {condition1} and si.is_return = 1
+                                Group By soi.item_group ,si.customer_group , si.customer ORDER BY si.customer""".format(name1=name,condition1=result_condtions), as_dict=1)
+                
+                if len(return_data) >0:
+                    data_1_return = []
+                    for i in return_data:
+                        value = {}
+                        value['customer'] = i.get('customer')
+                        value['customer_name'] = i.get('customer_name')
+                        value['customer_group'] = i.get('customer_group')
+                        value[i.get('item_group')] = i.get("qty")
+                        value['total_qty'] = i.get("qty")
+                        data_1_return.append(value)
+                        
+                    data_convert_return = pd.DataFrame.from_records(data_1_return)  
+                    final_data_return = data_convert_return.groupby(['customer',"customer_group",'customer_name'],as_index=False).sum()
+ 
+                
+                data = final_data_net.append(final_data_return)
+                final_data = data.groupby(['customer',"customer_group",'customer_name'],as_index=False).sum()
+                print(final_data)
                 convert_data = final_data.to_dict('records')
-                # return convert_data
                 if filters.customer_parent_group != [] or filters.customer_group != [] :
-                    return convert_data   
+                    return convert_data 
+
+            
+                
+            
     
     
 def get_columns(filters):
@@ -374,6 +491,12 @@ def get_columns(filters):
             "width": 150,
         },
         {
+            "label": _("Party Name"),
+            "fieldname": "customer_name",
+            "fieldtype": "Data",
+            "width": 150,
+        },
+        {
             "label": _("Party Group"),
             "fieldname": "customer_group",
             "fieldtype": "Data",
@@ -393,6 +516,12 @@ def get_columns(filters):
             "fieldname": "customer",
             "fieldtype": "Link",
             "options": "Customer",
+            "width": 150,
+        },
+        {
+            "label": _("Party Name"),
+            "fieldname": "customer_name",
+            "fieldtype": "Data",
             "width": 150,
         },
         {

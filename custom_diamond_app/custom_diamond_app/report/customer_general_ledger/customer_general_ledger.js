@@ -24,6 +24,44 @@ frappe.query_reports["Customer General Ledger"] = {
 		// 	"options": "Finance Book"
 		// },
 		{
+			"fieldname":"address",
+			"label": __("Address"),
+			"fieldtype": "MultiSelectList",
+			"reqd": 1,
+			get_data:function(txt) {
+				frappe.call({
+					method: "frappe.client.get_list",
+					args: {
+						doctype: "Address",
+						fields:['address_line1','address_line2','city','gst_state','pincode'],
+						filters: {
+							name: ["=", frappe.query_report.get_filter_value("company")],
+						},
+					},
+					callback:function(r, rt) {
+						let address_line1 = ''
+						let address_line2 = ''
+						let city = ''
+						let gst_state = ''
+						let pincode	 = ''
+						r.message.forEach((res)=>{
+							address_line1 = res.address_line1
+							address_line2= res.address_line2
+							city=res.city
+							gst_state = res.gst_state
+							pincode =res.pincode
+
+						})
+						result = `${address_line1}\n${address_line2}\n${city}\n${gst_state}\n${pincode}`
+						frappe.query_report.set_filter_value('address', result)
+					}
+				})
+				
+				
+            },
+			
+		},
+		{
 			"fieldname":"from_date",
 			"label": __("From Date"),
 			"fieldtype": "Date",
@@ -75,11 +113,6 @@ frappe.query_reports["Customer General Ledger"] = {
 			"fieldtype":'Link',
 			'options':'Customer Group',
 			'default':"",
-			// 'onchange':function(){
-			// 	console.log("hello")
-			// },
-			// 'default':,
-			
 			get_data:function(){
 				
 				console.log(data)

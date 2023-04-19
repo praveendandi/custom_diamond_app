@@ -151,6 +151,12 @@ frappe.query_reports["Sales View"] = {
             "fieldtype":'Check',
             'default':0,
         },
+        {
+            'fieldname':"replacement",
+            "label":__("Replacement"),
+            "fieldtype":'Check',
+            'default':0,
+        },
     ]
 };
 
