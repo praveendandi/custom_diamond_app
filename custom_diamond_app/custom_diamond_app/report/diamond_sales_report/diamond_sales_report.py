@@ -7,6 +7,7 @@ import pandas as pd
 from frappe.utils import flt
 
 def execute(filters=None):
+    print(filters,"////////////////...............")
     if not filters:
         return [], []
 
@@ -35,17 +36,29 @@ def get_conditions(filters):
         condition = ""
         condition += f"posting_date Between'{filters.from_date}' and '{filters.to_date}'"
         if filters['customer_parent_group'] and not filters['customer_group']:
-            customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":filters['customer_parent_group'][0]},["name"])
-            if len(customer_group)>0:
+            customer_group = frappe.db.get_list("Customer Group",{"parent_customer_group":('IN',(filters['customer_parent_group']))},["name"])
+            if len(customer_group)>1:
                 total_group = tuple([i["name"] for i in customer_group])
                 condition += f" and customer_group IN {total_group}"
-        if filters['customer_group']:
-            customer_group = filters["customer_group"][0]
-            condition += f" and customer_group = '{customer_group}'"
+            else:
+                condition += f" and customer_group = '{total_group}'"
+        if filters['customer_group'] and not filters['customer']:
+            if len(filters['customer_group'])>1:
+                customer_group = tuple([i for i in filters['customer_group']])
+                print(customer_group,".................")
+                condition += f" and customer_group IN {customer_group}"
+            else:
+                customer_group = filters["customer_group"][0]
+                condition += f" and customer_group = '{customer_group}'"
         
         if filters['customer']:
-            customer = filters["customer"][0]
-            condition += f" and customer = '{customer}'"
+            if len(filters['customer'])>1:
+                customer = tuple([i for i in filters['customer']])
+                print(customer,".................")
+                condition += f" and customer IN {customer}"
+            else:
+                customer = filters["customer"][0]
+                condition += f" and customer = '{customer}'"
             
         return condition
     
