@@ -574,14 +574,17 @@ def get_columns(filters):
 			"options": "GL Entry",
 			"hidden": 1,
 		},
-		{"label": _("Posting Date"), "fieldname": "posting_date", "fieldtype": "Date", "width": 90},
+		{"label": _("Date"), "fieldname": "posting_date", "fieldtype": "Date", "width": 90},
+		{"label": _("Voucher Type"), "fieldname": "voucher_type", "width": 120},
 		{
-			"label": _("Account"),
-			"fieldname": "account",
-			"fieldtype": "Link",
-			"options": "Account",
-			"width": 180,
-		},
+				"label": _("Voucher No"),
+				"fieldname": "voucher_no",
+				"fieldtype": "Dynamic Link",
+				"options": "voucher_type",
+				"width": 180,
+			},
+		{"label": _("Against Account"), "fieldname": "against", "width": 120},
+		{"label": _("Remarks"), "fieldname": "remarks", "width": 400},
 		{
 			"label": _("Debit ({0})").format(currency),
 			"fieldname": "debit",
@@ -600,19 +603,19 @@ def get_columns(filters):
 			"fieldtype": "Float",
 			"width": 130,
 		},
+		{
+			"label": _("Account"),
+			"fieldname": "account",
+			"fieldtype": "Link",
+			"options": "Account",
+			"width": 180,
+		},
 	]
 
 	columns.extend(
 		[
-			{"label": _("Voucher Type"), "fieldname": "voucher_type", "width": 120},
-			{
-				"label": _("Voucher No"),
-				"fieldname": "voucher_no",
-				"fieldtype": "Dynamic Link",
-				"options": "voucher_type",
-				"width": 180,
-			},
-			{"label": _("Against Account"), "fieldname": "against", "width": 120},
+			
+			
 			{"label": _("Party Type"), "fieldname": "party_type", "width": 100},
 			{"label": _("Party"), "fieldname": "party", "width": 100},
 			{"label": _("Project"), "options": "Project", "fieldname": "project", "width": 100},
@@ -639,7 +642,7 @@ def get_columns(filters):
 				"width": 100,
 			},
 			{"label": _("Supplier Invoice No"), "fieldname": "bill_no", "fieldtype": "Data", "width": 100},
-			{"label": _("Remarks"), "fieldname": "remarks", "width": 400},
+			# {"label": _("Remarks"), "fieldname": "remarks", "width": 400},
 		]
 	)
 

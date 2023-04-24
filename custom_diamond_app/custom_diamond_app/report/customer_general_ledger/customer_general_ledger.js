@@ -177,12 +177,34 @@ frappe.query_reports["Customer General Ledger"] = {
 					});
 				})
 			},
+			on_change: function() {
+				var party_type = frappe.query_report.get_filter_value('party_type');
+				var parties = frappe.query_report.get_filter_value('party');
+
+				if(!party_type || parties.length === 0 || parties.length > 1) {
+					frappe.query_report.set_filter_value('party_name', "");
+					frappe.query_report.set_filter_value('tax_id', "");
+					return;
+				} else {
+					var party = parties[0];
+					var fieldname = erpnext.utils.get_party_name(party_type) || "name";
+					frappe.db.get_value(party_type, party, fieldname, function(value) {
+						frappe.query_report.set_filter_value('party_name', value[fieldname]);
+					});
+
+					if (party_type === "Customer" || party_type === "Supplier") {
+						frappe.db.get_value(party_type, party, "tax_id", function(value) {
+							frappe.query_report.set_filter_value('tax_id', value["tax_id"]);
+						});
+					}
+				}
+			}
 		},
 		{
 			"fieldname":"party_name",
 			"label": __("Party Name"),
 			"fieldtype": "Data",
-			"hidden": 1
+			"hidden": 0
 		},
 		{
 			"fieldname":"group_by",
