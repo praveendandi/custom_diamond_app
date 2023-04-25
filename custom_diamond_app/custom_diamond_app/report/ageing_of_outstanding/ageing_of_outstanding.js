@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
-frappe.query_reports["Aging Of Outstanding"] = {
+frappe.query_reports["Ageing Of Outstanding"] = {
 	"filters": [
 		{
 			"fieldname": "company",
@@ -221,4 +221,4 @@ frappe.query_reports["Aging Of Outstanding"] = {
 	}
 }
 
-erpnext.utils.add_dimensions('Aging Of Outstanding', 9);
+erpnext.utils.add_dimensions('Ageing Of Outstanding', 9);

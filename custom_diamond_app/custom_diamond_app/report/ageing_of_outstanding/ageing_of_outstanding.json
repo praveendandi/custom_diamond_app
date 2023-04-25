@@ -13,11 +13,11 @@
  "modified": "2023-04-19 11:21:44.076158",
  "modified_by": "Administrator",
  "module": "Custom Diamond App",
- "name": "Aging Of Outstanding",
+ "name": "Ageing Of Outstanding",
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "Sales Invoice",
- "report_name": "Aging Of Outstanding",
+ "report_name": "Ageing Of Outstanding",
  "report_type": "Script Report",
  "roles": [
   {
