@@ -651,11 +651,3 @@ def bank_transaction(data,method=None):
 #     # )
 
 #     # return doclist
-      
-        
-        
-        
-
-
-
-

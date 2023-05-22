@@ -85,6 +85,8 @@ fixtures = [
                 'Item Group-sales_views_report',
                 'Customer-balance_confirmation',
                 'Customer-enter_balance',
+                'Sales Order-discount_on_advance',
+                'Sales Order-enter_discount_percentage',
                 # 'Sales Order-transporter_id',
                 ]
         ]]
