@@ -158,7 +158,7 @@ def get_data(filters,result_condtions):
         return data
     if filters.type_of_tree == "Item Wise":
         
-        data = frappe.db.sql("""select pi.supplier,pi.supplier_group,pi.supplier_name,poi.item_code,poi.item_group,poi.item_name,SUM(amount) as amount
+        data = frappe.db.sql("""select pi.supplier,pi.supplier_group,pi.supplier_name,poi.item_code,poi.item_group,poi.item_name,SUM(amount) as amount,SUM(stock_qty) as qty
                              FROM
                              `tabPurchase Invoice` as pi,
                              `tabPurchase Invoice Item` as poi
@@ -339,6 +339,12 @@ def get_columns(filters):
             "label": _("amount"),
             "fieldname": "amount",
             "fieldtype": "Currency",
+            "width": 150,
+        },
+        {
+            "label": _("Qty"),
+            "fieldname": "qty",
+            "fieldtype": "Float",
             "width": 150,
         },
         ]
