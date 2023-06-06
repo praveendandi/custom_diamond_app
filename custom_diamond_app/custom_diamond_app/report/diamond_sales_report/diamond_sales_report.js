@@ -25,7 +25,7 @@ frappe.query_reports["Diamond Sales Report"] = {
 			'fieldname':"type_of_tree",
 			"label": __("Type Of Tree"),
 			"fieldtype": "Select",
-			"options":["Customer Wise","Item Wise","Item Group Wise","Item Group Wise Qty"],
+			"options":["Customer Wise","Item Wise","Item Group Wise","Item Group Wise Qty","Item Wise Total Sale"],
 			"default":"Customer Wise"
 		},
 		{
@@ -81,7 +81,7 @@ frappe.query_reports["Diamond Sales Report"] = {
 			get_data:function(txt) {	
 				let base_value = frappe.query_report.get_filter_value('item_parent_Group')
 				return frappe.db.get_link_options('Item Group', txt,{
-					parent_item_group :base_value[0]
+					parent_item_group :['IN',base_value]
 				});
 			}
 		},
@@ -92,7 +92,7 @@ frappe.query_reports["Diamond Sales Report"] = {
 			get_data:function(txt) {	
 				let base_value = frappe.query_report.get_filter_value('item_group')
 				return frappe.db.get_link_options('Item', txt,{
-					item_group :base_value[0]
+					item_group :['IN',base_value]
 				});
 			},
 			"hidden": 1,

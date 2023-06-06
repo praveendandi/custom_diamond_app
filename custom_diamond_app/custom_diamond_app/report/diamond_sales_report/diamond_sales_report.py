@@ -96,6 +96,7 @@ def get_conditions(filters):
             customer = filters["customer"][0]
             condition += f" and si.customer = '{customer}'"
         return condition
+    
     if filters.type_of_tree == "Item Group Wise":
         condition = ""
         condition += f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
@@ -143,8 +144,27 @@ def get_conditions(filters):
         if filters['customer']:
             customer = filters["customer"][0]
             condition += f" and si.customer = '{customer}'"
-            
+        
         return condition
+       
+    if filters.type_of_tree == 'Item Wise Total Sale':
+        condition = ""
+        condition += f"si.posting_date Between'{filters.from_date}' and '{filters.to_date}'"
+        
+        if filters["item_parent_Group"] and not filters['item_group']:
+            items_groups = frappe.db.get_list("Item Group",{"parent_item_group":filters["item_parent_Group"][0]},["name"])
+            if len(items_groups)>0:
+                total_group = tuple([i["name"] for i in items_groups])
+                condition += f" and soi.item_group IN {total_group}"
+                
+        if filters['item_group']:
+            item_group = filters["item_group"][0]
+            condition += f" and soi.item_group = '{item_group}'"
+        
+        return condition
+        
+            
+        
 
 def get_data(filters,result_condtions):
     if filters.type_of_tree == "Customer Wise":
@@ -176,7 +196,7 @@ def get_data(filters,result_condtions):
         return data
     if filters.type_of_tree == "Item Wise":
         
-        data = frappe.db.sql("""select si.customer,si.customer_group,si.customer_name,soi.item_code,soi.item_group,soi.item_name,SUM(amount) as amount
+        data = frappe.db.sql("""select si.customer,si.customer_group,si.customer_name,soi.item_code,soi.item_group,soi.item_name,SUM(amount) as amount,SUM(stock_qty) as qty
                              FROM
                              `tabSales Invoice` as si,
                              `tabSales Invoice Item` as soi
@@ -246,6 +266,21 @@ def get_data(filters,result_condtions):
                 final_data = data_convert.groupby(['customer',"customer_group"],as_index=False).sum()
                 convert_data = final_data.to_dict('records')
                 return convert_data
+    
+    if filters.type_of_tree == "Item Wise Total Sale":
+        
+        data = frappe.db.sql("""select soi.item_code,soi.item_group,soi.item_name,SUM(amount) as amount,SUM(stock_qty) as qty
+                             FROM
+                             `tabSales Invoice` as si,
+                             `tabSales Invoice Item` as soi
+                             WHERE
+                             soi.parent = si.name and
+                             si.docstatus = 1  and si.is_return != 1 and {conditions}
+                             GROUP BY
+                             soi.item_code,soi.item_code
+                             """.format(conditions=result_condtions),as_dict=1)
+        
+        return data
             
     
     
@@ -355,6 +390,12 @@ def get_columns(filters):
             "fieldtype": "Currency",
             "width": 150,
         },
+        {
+            "label": _("Qty"),
+            "fieldname": "qty",
+            "fieldtype": "Float",
+            "width": 150,
+        },
         ]
     if filters.type_of_tree == 'Item Group Wise' and filters['item_parent_Group']:
         columns +=[
@@ -403,6 +444,43 @@ def get_columns(filters):
             item_group = frappe.db.get_list("Item Group",{"parent_item_group":parent_group},pluck='name')
         columns += [{"label": _(each),"fieldname": each, "fieldtype": "Data", "width": 150} for each in item_group]
         columns +=[{"label":_("Total Qty"),"fieldname":"total_qty","fieldtype":"Data","width":150}]
+        
+    if filters.type_of_tree == 'Item Wise Total Sale':
+        columns +=[
+            {
+            "label": _("Item Code"),
+            "fieldname": "item_code",
+            "fieldtype": "Link",
+            "options": "Item",
+            "width": 250,
+        },
+       {
+            "label": _("Item Name"),
+            "fieldname": "item_name",
+            "fieldtype": "Data",
+            "options": "Item Group",
+            "width": 250,
+        },
+        {
+            "label": _("Item Group"),
+            "fieldname": "item_group",
+            "fieldtype": "Link",
+            "options": "Item Group",
+            "width": 200,
+        },
+        {
+            "label": _("Qty"),
+            "fieldname": "qty",
+            "fieldtype": "Float",
+            "width": 150,
+        },
+        {
+            "label": _("amount"),
+            "fieldname": "amount",
+            "fieldtype": "Currency",
+            "width": 150,
+        },
+        ]
 
     
     return columns
