@@ -2,7 +2,13 @@
 # For license information, please see license.txt
 
 # import frappe
-# import copy
+
+
+# def execute(filters=None):
+# 	columns, data = [], []
+# 	return columns, data
+
+
 from collections import OrderedDict
 
 import frappe
@@ -317,3 +323,4 @@ def get_columns(filters):
 	)
 
 	return columns
+

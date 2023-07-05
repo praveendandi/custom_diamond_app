@@ -2,7 +2,7 @@
 // For license information, please see license.txt
 /* eslint-disable */
 
-frappe.query_reports["Item Wise Sales Order Report"] = {
+frappe.query_reports["Item Wise Sales Order"] = {
 	"filters": [
 		{
 			"fieldname": "company",
