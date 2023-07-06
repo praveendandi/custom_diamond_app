@@ -13,12 +13,12 @@
     "letter_head": "Diamond Modular Pvt  Ltd",
     "modified": "2023-07-05 16:22:16.071620",
     "modified_by": "Administrator",
-    "module": "Erpnext Trainee App",
-    "name": "Item Wise Sales Order",
+    "module": "Custom Diamond App",
+    "name": "Item Wise Sales Order Report",
     "owner": "Administrator",
     "prepared_report": 0,
     "ref_doctype": "Sales Order",
-    "report_name": "Item Wise Sales Order",
+    "report_name": "Item Wise Sales Order Report",
     "report_type": "Script Report",
     "roles": [
      {
