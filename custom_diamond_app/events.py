@@ -386,31 +386,12 @@ def get_unpaid_sales_invoices(data):
         # exc_type, exc_obj, exc_tb = sys.exc_info()
         # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "get_unpaid_sales_invoices")
         
-    
-def update_addition_amount(data,method=None):
-    # print("..............................")
-    total_amount = 0.0
-    if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1 and method != 'on_cancel':
-        if len(data.sales_invoice) :
-            for i in range(len(data.sales_invoice)):
-                total_amount +=data.sales_invoice[i].allocated_amount
-                print(data.sales_invoice[i].allocated_amount)
-            
-            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
-            frappe.db.commit()
-    else:
-        if data.is_return ==1 and method != 'on_cancel':
-            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
-            frappe.db.commit()
+ 
         
         
-        
-        
-
 def create_GL_entry_through_si_return(data,method=None):
     try:
-        if data.get_unpaid_and_partly_paid_invoices==1 and method == 'on_submit':
-            
+        if data.get_unpaid_and_partly_paid_invoices==1 and method == 'on_submit': 
             # Fetch the GL Entry DocType
             for i in range(len(data.sales_invoice)):
                 frappe.reload_doctype('GL Entry')
@@ -478,6 +459,69 @@ def create_GL_entry_through_si_return(data,method=None):
         # exc_type, exc_obj, exc_tb = sys.exc_info()
         # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
         
+    
+def update_addition_amount(data,method=None):
+    # print(data.outstanding_amount,"..............................")
+    total_amount = 0.00
+    outstanding_amount = 0.00
+    if data.get_unpaid_and_partly_paid_invoices == 1  and data.is_return == 1 and method != 'on_cancel':
+        if len(data.sales_invoice) :
+            for i in range(len(data.sales_invoice)):
+                total_amount +=data.sales_invoice[i].allocated_amount
+                print(data.sales_invoice[i].allocated_amount)
+            
+            gl_return = frappe.get_doc({
+                "doctype": "GL Entry",
+                "posting_date": data.posting_date,
+                "party_type":"Customer",
+                "party":data.customer,
+                "account": "Debtors - DMPL",
+                "debit": 0.00,
+                "debit_in_account_currency":0.00,
+                "credit":data.outstanding_amount,
+                "credit_in_account_currency":data.outstanding_amount,
+                "against":"Sales - DMPL",
+                "against_voucher_type":"Sales Invoice",
+                "against_voucher":data.name,
+                "voucher_type":"Sales Invoice",
+                "voucher_no": data.name,
+                "remarks":data.name,
+                "is_opening":"No",
+                "is_advance":"No",
+                # "fiscal_year":"2022-2023",
+                "company":"DIAMOND MODULAR PRIVATE LIMITED",
+                })
+            
+            gl_return.insert()
+
+            outstanding_amount = abs(data.outstanding_amount + total_amount)
+            frappe.db.set_value("Sales Invoice",data.name,{"outstanding_amount":-outstanding_amount},update_modified=False)
+            frappe.db.commit()
+    # else:
+    #     if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1 and method != 'on_cancel':
+    #         frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
+    #         frappe.db.commit()
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
         
 def employee_expense_claim(data,method = None):
     try:
