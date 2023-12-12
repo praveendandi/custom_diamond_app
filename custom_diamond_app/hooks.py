@@ -87,6 +87,7 @@ fixtures = [
                 'Customer-enter_balance',
                 'Sales Order-discount_on_advance',
                 'Sales Order-enter_discount_percentage',
+		'Delivery Note Item-carton_number',
                 # 'Sales Order-transporter_id',
                 ]
         ]]
