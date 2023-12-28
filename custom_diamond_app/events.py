@@ -17,13 +17,13 @@ from six import string_types
 import time
 
 from erpnext.accounts.doctype.sales_invoice.sales_invoice import (
-	unlink_inter_company_doc,
-	update_linked_doc,
-	validate_inter_company_party,
+    unlink_inter_company_doc,
+    update_linked_doc,
+    validate_inter_company_party,
 )
 from erpnext.controllers.selling_controller import SellingController
 from erpnext.manufacturing.doctype.production_plan.production_plan import (
-	get_items_for_material_requests,
+    get_items_for_material_requests,
 )
 from erpnext.selling.doctype.customer.customer import check_credit_limit
 from erpnext.setup.doctype.item_group.item_group import get_item_group_defaults
@@ -36,67 +36,67 @@ import datetime
 
 @frappe.whitelist()
 def make_delivery_note(source_name, target_doc=None, skip_item_mapping=False):
-	def set_missing_values(source, target):
-		target.run_method("set_missing_values")
-		target.run_method("set_po_nos")
-		target.run_method("calculate_taxes_and_totals")
+    def set_missing_values(source, target):
+        target.run_method("set_missing_values")
+        target.run_method("set_po_nos")
+        target.run_method("calculate_taxes_and_totals")
 
-		if source.company_address:
-			target.update({"company_address": source.company_address})
-		else:
-			# set company address
-			target.update(get_company_address(target.company))
+        if source.company_address:
+            target.update({"company_address": source.company_address})
+        else:
+            # set company address
+            target.update(get_company_address(target.company))
 
-		if target.company_address:
-			target.update(get_fetch_values("Delivery Note", "company_address", target.company_address))
+        if target.company_address:
+            target.update(get_fetch_values("Delivery Note", "company_address", target.company_address))
 
-	def update_item(source, target, source_parent):
-		target.base_amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.base_rate)
-		target.amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.rate)
-		target.qty = flt(source.qty) - flt(source.delivered_qty)
+    def update_item(source, target, source_parent):
+        target.base_amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.base_rate)
+        target.amount = (flt(source.qty) - flt(source.delivered_qty)) * flt(source.rate)
+        target.qty = flt(source.qty) - flt(source.delivered_qty)
 
-		item = get_item_defaults(target.item_code, source_parent.company)
-		item_group = get_item_group_defaults(target.item_code, source_parent.company)
+        item = get_item_defaults(target.item_code, source_parent.company)
+        item_group = get_item_group_defaults(target.item_code, source_parent.company)
 
-		if item:
-			target.cost_center = (
-				frappe.db.get_value("Project", source_parent.project, "cost_center")
-				or item.get("buying_cost_center")
-				or item_group.get("buying_cost_center")
-			)
+        if item:
+            target.cost_center = (
+                frappe.db.get_value("Project", source_parent.project, "cost_center")
+                or item.get("buying_cost_center")
+                or item_group.get("buying_cost_center")
+            )
 
-	mapper = {
-		"Sales Order": {"doctype": "Delivery Note", "validation": {"docstatus": ["=", 1]}},
-		"Sales Taxes and Charges": {"doctype": "Sales Taxes and Charges", "add_if_empty": True},
-		"Sales Team": {"doctype": "Sales Team", "add_if_empty": True},
-	}
+    mapper = {
+        "Sales Order": {"doctype": "Delivery Note", "validation": {"docstatus": ["=", 1]}},
+        "Sales Taxes and Charges": {"doctype": "Sales Taxes and Charges", "add_if_empty": True},
+        "Sales Team": {"doctype": "Sales Team", "add_if_empty": True},
+    }
 
-	if not skip_item_mapping:
+    if not skip_item_mapping:
 
-		def condition(doc):
-			# make_mapped_doc sets js `args` into `frappe.flags.args`
-			if frappe.flags.args and frappe.flags.args.delivery_dates:
-				if cstr(doc.delivery_date) not in frappe.flags.args.delivery_dates:
-					return False
-			return abs(doc.delivered_qty) < abs(doc.qty) and doc.delivered_by_supplier != 1
+        def condition(doc):
+            # make_mapped_doc sets js `args` into `frappe.flags.args`
+            if frappe.flags.args and frappe.flags.args.delivery_dates:
+                if cstr(doc.delivery_date) not in frappe.flags.args.delivery_dates:
+                    return False
+            return abs(doc.delivered_qty) < abs(doc.qty) and doc.delivered_by_supplier != 1
 
-		mapper["Sales Order Item"] = {
-			"doctype": "Delivery Note Item",
-			"field_map": {
-				"rate": "rate",
-				"name": "so_detail",
-				"parent": "against_sales_order",
-				"qty":"quantity_in_sales_order_",
-			},
-			"postprocess": update_item,
-			"condition": condition,
-		}
+        mapper["Sales Order Item"] = {
+            "doctype": "Delivery Note Item",
+            "field_map": {
+                "rate": "rate",
+                "name": "so_detail",
+                "parent": "against_sales_order",
+                "qty":"quantity_in_sales_order_",
+            },
+            "postprocess": update_item,
+            "condition": condition,
+        }
 
-	target_doc = get_mapped_doc("Sales Order", source_name, mapper, target_doc, set_missing_values)
+    target_doc = get_mapped_doc("Sales Order", source_name, mapper, target_doc, set_missing_values)
 
-	target_doc.set_onload("ignore_price_list", True)
+    target_doc.set_onload("ignore_price_list", True)
 
-	return target_doc
+    return target_doc
 
 @frappe.whitelist()
 def update_item_details_erp(doc,method=None):
@@ -111,13 +111,13 @@ def update_item_details_erp(doc,method=None):
 
             
 def sales_order_overdue_validation(doc,method=None):
-    print(doc,"****************************")
+    # print(doc,"****************************")
     get_sales_invoice = frappe.db.get_list("Sales Invoice",filters={'customer':doc.customer,'status':'overdue'},fields=['customer','status','name','grand_total','posting_date'],order_by='posting_date asc')
-    print("sales invoice",get_sales_invoice)
+    # print("sales invoice",get_sales_invoice)
     for invoice in get_sales_invoice:
-        print(invoice["posting_date"],"*************", datetime.date.today())
+        # print(invoice["posting_date"],"*************", datetime.date.today())
         date_1 = (datetime.date.today()-invoice["posting_date"]).days
-        print(date_1,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        # print(date_1,"!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         if date_1 > 90:
             frappe.db.set_value("Sales Order", doc.name, {"status":"On Hold"})
             frappe.db.commit()
@@ -145,12 +145,12 @@ def get_roles(user=None, with_standard=True):
             where parent=%s and role not in ('All', 'Guest')""", (user,))] + ['All', 'Guest']
 
     roles = frappe.cache().hget("roles", user, get)
-    print(roles,"////////////////")
+    # print(roles,"////////////////")
 
     if not with_standard:
         roles = filter(lambda x: x not in ['All', 'Guest', 'Administrator'], roles)
     
-    print(roles,",,,,,,,,,,,,,,,,,,,,,,,,,,,,,")
+    # print(roles,",,,,,,,,,,,,,,,,,,,,,,,,,,,,,")
     
     return roles
 
@@ -261,11 +261,8 @@ def stock_entry_after_submit_purchase_recipt(doc,method=None):
         for i in range(len(doc.items)):
             item_codes = doc.items[i].item_code
             if frappe.db.exists("BOM",{"item":item_codes},"name"):
-                print(item_codes,"////////////////")
                 accepted_qty = doc.items[i].stock_qty
-                print(accepted_qty,"////////////") 
                 bom_no = frappe.db.get_value("BOM",{"item":item_codes},"name")
-                print(bom_no,"/////////////////")
                 doc_insert = frappe.get_doc("Stock Entry",{"stock_entry_type":"Material Consumption for Manufacture","from_bom":1,})
                 doc_insert.bom_no = bom_no
                 doc_insert.fg_completed_qty = accepted_qty
@@ -283,7 +280,6 @@ def bom_item_uom(doc,method=None):
         bom_data = frappe.db.get_list("BOM Item",filters={"parent":doc.name},fields=['item_code','uom'])
         for i in bom_data:
             item_data = frappe.db.get_list("UOM Conversion Detail",filters={"parent":i.item_code},fields=['uom'])
-            print(i,"*********",item_data)
             if next((j for j in item_data if j["uom"] == i.uom),False):
                 pass
             else:
@@ -390,31 +386,12 @@ def get_unpaid_sales_invoices(data):
         # exc_type, exc_obj, exc_tb = sys.exc_info()
         # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "get_unpaid_sales_invoices")
         
-    
-def update_addition_amount(data,method=None):
-    print("..............................")
-    total_amount = 0.0
-    if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1 and method != 'on_cancel':
-        if len(data.sales_invoice) :
-            for i in range(len(data.sales_invoice)):
-                total_amount +=data.sales_invoice[i].allocated_amount
-                print(data.sales_invoice[i].allocated_amount)
-            
-            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
-            frappe.db.commit()
-    else:
-        if data.is_return ==1 and method != 'on_cancel':
-            frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
-            frappe.db.commit()
+ 
         
         
-        
-        
-
 def create_GL_entry_through_si_return(data,method=None):
     try:
-        if data.get_unpaid_and_partly_paid_invoices==1 and method == 'on_submit':
-            
+        if data.get_unpaid_and_partly_paid_invoices==1 and method == 'on_submit': 
             # Fetch the GL Entry DocType
             for i in range(len(data.sales_invoice)):
                 frappe.reload_doctype('GL Entry')
@@ -450,7 +427,7 @@ def create_GL_entry_through_si_return(data,method=None):
             for j in range(len(data.sales_invoice)):
                 if frappe.db.exists('Sales Invoice',{"name":data.sales_invoice[j].reference_no}):
                     get_data = frappe.db.get_list("Sales Invoice",{"name":data.sales_invoice[j].reference_no},['name','outstanding_amount','status'])
-                    print(get_data,"................................")
+                    # print(get_data,"................................")
                     
                     if int(get_data[0]['outstanding_amount']) == int(data.sales_invoice[j].allocated_amount) and get_data[0]['status'] == 'Unpaid':
 
@@ -464,10 +441,10 @@ def create_GL_entry_through_si_return(data,method=None):
             
         if data.get_unpaid_and_partly_paid_invoices==1 and  method == 'on_cancel':
             for k in range(len(data.sales_invoice)):
-                print("//////////////////,,,,,,,,,,,,,,,,,,,,,,,,,,")
+                # print("//////////////////,,,,,,,,,,,,,,,,,,,,,,,,,,")
                 if frappe.db.exists('Sales Invoice',{"name":data.sales_invoice[k].reference_no}) and method == 'on_cancel':
                     get_data = frappe.db.get_list("Sales Invoice",{"name":data.sales_invoice[k].reference_no},['name','outstanding_amount','status'])
-                    print(get_data,"/////////////////////")
+                    # print(get_data,"/////////////////////")
                     if int(get_data[0]['outstanding_amount']) == 0 and get_data[0]['status'] == 'Paid':
                         frappe.db.set_value("Sales Invoice",data.sales_invoice[k].reference_no,{"status":"Unpaid",'outstanding_amount':data.sales_invoice[k].allocated_amount},update_modified=False)
                         frappe.db.commit()
@@ -482,6 +459,69 @@ def create_GL_entry_through_si_return(data,method=None):
         # exc_type, exc_obj, exc_tb = sys.exc_info()
         # frappe.log_error("line No:{}\n{}".format(exc_tb.tb_lineno, traceback.format_exc()), "return_journal_entry")
         
+    
+def update_addition_amount(data,method=None):
+    # print(data.outstanding_amount,"..............................")
+    total_amount = 0.00
+    outstanding_amount = 0.00
+    if data.get_unpaid_and_partly_paid_invoices == 1  and data.is_return == 1 and method != 'on_cancel':
+        if len(data.sales_invoice) :
+            for i in range(len(data.sales_invoice)):
+                total_amount +=data.sales_invoice[i].allocated_amount
+                print(data.sales_invoice[i].allocated_amount)
+            
+            gl_return = frappe.get_doc({
+                "doctype": "GL Entry",
+                "posting_date": data.posting_date,
+                "party_type":"Customer",
+                "party":data.customer,
+                "account": "Debtors - DMPL",
+                "debit": 0.00,
+                "debit_in_account_currency":0.00,
+                "credit":data.outstanding_amount,
+                "credit_in_account_currency":data.outstanding_amount,
+                "against":"Sales - DMPL",
+                "against_voucher_type":"Sales Invoice",
+                "against_voucher":data.name,
+                "voucher_type":"Sales Invoice",
+                "voucher_no": data.name,
+                "remarks":data.name,
+                "is_opening":"No",
+                "is_advance":"No",
+                # "fiscal_year":"2022-2023",
+                "company":"DIAMOND MODULAR PRIVATE LIMITED",
+                })
+            
+            gl_return.insert()
+
+            outstanding_amount = abs(data.outstanding_amount + total_amount)
+            frappe.db.set_value("Sales Invoice",data.name,{"outstanding_amount":-outstanding_amount},update_modified=False)
+            frappe.db.commit()
+    # else:
+    #     if data.get_unpaid_and_partly_paid_invoices and data.is_return ==1 and method != 'on_cancel':
+    #         frappe.db.set_value("Sales Invoice",data.name,{"apply_discount_on":"Grand Total","discount_amount":-total_amount},update_modified=False)
+    #         frappe.db.commit()
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
         
 def employee_expense_claim(data,method = None):
     try:
@@ -600,4 +640,58 @@ def bank_transaction(data,method=None):
     except Exception as e:
         print(str(e))
 
-#Test Comment
+
+
+# @frappe.whitelist()
+# def make_work_order(source_name, target_doc=None, args=None):
+#     print(source_name,target_doc,args,"////////////")
+#     # if args is None:
+#     #     args = {}
+#     # if isinstance(args, string_types):
+#     #     args = json.loads(args)
+
+#     # def postprocess(source, target_doc):
+#     #     if frappe.flags.args and frappe.flags.args.default_supplier:
+#     #         # items only for given default supplier
+#     #         supplier_items = []
+#     #         for d in target_doc.items:
+#     #             default_supplier = get_item_defaults(d.item_code, target_doc.company).get("default_supplier")
+#     #             if frappe.flags.args.default_supplier == default_supplier:
+#     #                 supplier_items.append(d)
+#     #         target_doc.items = supplier_items
+
+#     #     set_missing_values(source, target_doc)
+
+#     # def select_item(d):
+#     #     filtered_items = args.get("filtered_children", [])
+#     #     child_filter = d.name in filtered_items if filtered_items else True
+
+#     #     return d.ordered_qty < d.stock_qty and child_filter
+
+#     # doclist = get_mapped_doc(
+#     #     "Work Order",
+#     #     source_name,
+#     #     {
+#     #         "Work Order": {
+#     #             "doctype": "Purchase Order",
+#     #             "validation": {"docstatus": ["=", 1], "material_request_type": ["=", "Purchase"]},
+#     #         },
+#     #         "Material Request Item": {
+#     #             "doctype": "Purchase Order Item",
+#     #             "field_map": [
+#     #                 ["name", "material_request_item"],
+#     #                 ["parent", "material_request"],
+#     #                 ["uom", "stock_uom"],
+#     #                 ["uom", "uom"],
+#     #                 ["sales_order", "sales_order"],
+#     #                 ["sales_order_item", "sales_order_item"],
+#     #             ],
+#     #             "postprocess": update_item,
+#     #             "condition": select_item,
+#     #         },
+#     #     },
+#     #     target_doc,
+#     #     postprocess,
+#     # )
+
+#     # return doclist

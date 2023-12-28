@@ -2,7 +2,14 @@
 # For license information, please see license.txt
 
 # import frappe
-# import copy
+
+
+# def execute(filters=None):
+# 	columns, data = [], []
+# 	return columns, data
+
+
+
 from collections import OrderedDict
 
 import frappe
@@ -90,12 +97,14 @@ def get_data(conditions, filters):
 		SELECT
 			so.name as sales_order,so.status, so.customer,so.customer_group,soi.item_code,soi.item_group,
 			SUM(soi.qty) AS qty, SUM(soi.delivered_qty) AS delivered_qty,(SUM(soi.qty) - SUM(soi.delivered_qty)) AS pending_qty,
-			
+			dn.name as delivery_note,
 			so.company, soi.name,
 			soi.description as description
 		FROM
-			`tabSales Order` so,
-			`tabSales Order Item` soi
+			`tabSales Order` so
+			INNER JOIN `tabSales Order Item` soi ON soi.parent = so.name
+            LEFT JOIN `tabDelivery Note Item` dni ON dni.so_detail = soi.name
+            LEFT JOIN `tabDelivery Note` dn ON dni.parent = dn.name
 	
 		WHERE
 			soi.parent = so.name
@@ -249,6 +258,7 @@ def get_columns(filters):
 			"options": "Customer Group",
 			"width": 130,
 		},
+		
 		{
 			"label": _("Parent Customer Group"),
 			"fieldname": "parent_customer_group",
@@ -256,6 +266,20 @@ def get_columns(filters):
 			"options": "Customer Group",
 			"width": 130,
 			"is_group":1
+		},
+		{
+			"label": _("Sales Order"),
+			"fieldname": "sales_order",
+			"fieldtype": "Link",
+			"options": "Sales Order",
+			"width": 130,
+		},
+		{
+			"label": _("Delivery Note"),
+			"fieldname": "delivery_note",
+			"fieldtype": "Link",
+			"options": "Delivery Note",
+			"width": 130,
 		},
 	]
 
@@ -317,3 +341,4 @@ def get_columns(filters):
 	)
 
 	return columns
+

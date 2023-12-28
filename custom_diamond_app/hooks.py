@@ -82,6 +82,12 @@ fixtures = [
                 'Sales Invoice-sales_invoice',
                 'Delivery Note-total_material_weight',
                 'Sales Invoice-total_material_weight',
+                'Item Group-sales_views_report',
+                'Customer-balance_confirmation',
+                'Customer-enter_balance',
+                'Sales Order-discount_on_advance',
+                'Sales Order-enter_discount_percentage',
+		'Delivery Note Item-carton_number',
                 # 'Sales Order-transporter_id',
                 ]
         ]]
@@ -161,8 +167,10 @@ doc_events = {
 		"on_submit":'custom_diamond_app.events.bank_transaction'
 	},
 	"Sales Invoice": {
-		"on_submit":"custom_diamond_app.events.create_GL_entry_through_si_return",
-		"on_update":"custom_diamond_app.events.update_addition_amount",
+		"on_submit":["custom_diamond_app.events.create_GL_entry_through_si_return",
+               "custom_diamond_app.events.update_addition_amount"
+               ],
+		# "on_submit":"custom_diamond_app.events.update_addition_amount",
 		"on_cancel":"custom_diamond_app.events.create_GL_entry_through_si_return"
 	},
  	"Salary Slip":{
@@ -175,7 +183,12 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
+scheduler_events = {
+    "cron": {
+        "45 0 * * *": [
+			"custom_diamond_app.reorder_level.reorder_item",
+		],
+    }
 # 	"all": [
 # 		"custom_diamond_app.tasks.all"
 # 	],
@@ -191,7 +204,7 @@ doc_events = {
 # 	"monthly": [
 # 		"custom_diamond_app.tasks.monthly"
 # 	]
-# }
+}
 
 # Testing
 # -------
@@ -207,7 +220,9 @@ doc_events = {
 override_whitelisted_methods = {
     "erpnext.selling.doctype.sales_order.sales_order.make_delivery_note":"custom_diamond_app.events.make_delivery_note"
 }
-
+# override_whitelisted_methods = {
+#     "erpnext.stock.reorder_item.reorder_item":"custom_diamond_app.reorder_level.reorder_item"
+# }
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,
