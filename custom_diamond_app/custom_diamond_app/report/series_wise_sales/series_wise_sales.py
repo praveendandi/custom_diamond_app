@@ -49,22 +49,18 @@ def get_data(filters,row_data):
                                                    "posting_date":[">=",filters.get("from_date"),"<=",filters.get("to_date")],
                                                    }
                             )
+       
         draft = frappe.db.count('Sales Invoice', {'docstatus': 0,"naming_series":naming_ser['naming_series'],
-                                                  "posting_date":[">=",filters.get("from_date"),"<=",filters.get("to_date")],
+                                                  "posting_date":[">=",filters.get("from_date")],
+                                                  "posting_date":["<=",filters.get("to_date")]
                                                 }
                             )
-        
+
         cancel = frappe.db.count('Sales Invoice', {'docstatus': 2,"naming_series":naming_ser['naming_series'],
                                                    "posting_date":[">=",filters.get("from_date"),"<=",filters.get("to_date")],
 
                                                    }
                             )
-        
-        naming_ser.update({
-            "sumbit":sumbit if sumbit >0 else 0,
-            "draft":draft if draft >0 else 0,
-            "cancel":cancel if cancel >0 else 0
-        })
         
         invoice = frappe.db.get_list("Sales Invoice",
                                      {"naming_series":naming_ser['naming_series'],
@@ -79,7 +75,10 @@ def get_data(filters,row_data):
         
         naming_ser.update({
             "first_invoice":first_invoice,
-            "last_invoice":last_invoice
+            "last_invoice":last_invoice,
+            "sumbit":sumbit if sumbit >0 else 0,
+            "draft":draft if draft >0 else 0,
+            "cancel":cancel if cancel >0 else 0
         })
     
     return actual_data
