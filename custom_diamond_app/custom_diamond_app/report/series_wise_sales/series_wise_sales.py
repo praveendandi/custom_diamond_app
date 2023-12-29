@@ -39,6 +39,49 @@ def get_data(filters,row_data):
     group_data = convert_data.groupby(by="naming_series",as_index=False).sum()
     actual_data = group_data.to_dict("records")
     
+    
+    for naming_ser in actual_data:
+        sumbit = 0
+        draft = 0
+        cancel = 0
+        
+        sumbit = frappe.db.count('Sales Invoice', {'docstatus': 1,"naming_series":naming_ser['naming_series'],
+                                                   "posting_date":[">=",filters.get("from_date"),"<=",filters.get("to_date")],
+                                                   }
+                            )
+        draft = frappe.db.count('Sales Invoice', {'docstatus': 0,"naming_series":naming_ser['naming_series'],
+                                                  "posting_date":[">=",filters.get("from_date"),"<=",filters.get("to_date")],
+                                                }
+                            )
+        
+        cancel = frappe.db.count('Sales Invoice', {'docstatus': 2,"naming_series":naming_ser['naming_series'],
+                                                   "posting_date":[">=",filters.get("from_date"),"<=",filters.get("to_date")],
+
+                                                   }
+                            )
+        
+        naming_ser.update({
+            "sumbit":sumbit if sumbit >0 else 0,
+            "draft":draft if draft >0 else 0,
+            "cancel":cancel if cancel >0 else 0
+        })
+        
+        invoice = frappe.db.get_list("Sales Invoice",
+                                     {"naming_series":naming_ser['naming_series'],
+                                      "posting_date":["Between",[filters.get("from_date"),filters.get("to_date")]]
+                                    },
+                                    ['name','posting_date','naming_series'],
+                                    order_by='posting_date asc'
+                                    )
+        
+        first_invoice = invoice[0]['name']
+        last_invoice = invoice[-1]['name']
+        
+        naming_ser.update({
+            "first_invoice":first_invoice,
+            "last_invoice":last_invoice
+        })
+    
     return actual_data
 
 
@@ -49,6 +92,18 @@ def get_columns():
 			"fieldname": "naming_series",
 			"fieldtype": "Data",
             "width":200,
+		},
+        {
+			"label": _("First Invoice"),
+			"fieldname": "first_invoice",
+			"fieldtype": "Data",
+            "width":150,
+		},
+        {
+			"label": _("Last Invoice"),
+			"fieldname": "last_invoice",
+			"fieldtype": "Data",
+            "width":150,
 		},
         {
 
@@ -86,6 +141,24 @@ def get_columns():
 			"fieldname": "grand_total",
 			"fieldtype": "Currency",
             "width":200,
+		},
+        {
+			"label": _("Draft"),
+			"fieldname": "draft",
+			"fieldtype": "Int",
+            "width":100,
+		},
+        {
+			"label": _("Sumbit"),
+			"fieldname": "sumbit",
+			"fieldtype": "Int",
+            "width":100,
+		},
+        {
+			"label": _("Cancel"),
+			"fieldname": "cancel",
+			"fieldtype": "Int",
+            "width":100,
 		},
     ]
     
